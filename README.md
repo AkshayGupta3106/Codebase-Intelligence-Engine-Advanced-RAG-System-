@@ -646,36 +646,7 @@ The Vite development server will provide the local frontend URL.
 
 ------------------------------------------------------------------------
 
-# 📊 Evaluation
 
-The project includes an evaluation harness under:
-
-``` text
-eval/
-```
-
-The primary retrieval metric is:
-
-### File Hit Rate @3
-
-This measures whether the actual source file containing the answer
-appears among the top three retrieved results.
-
-Current evaluation results:
-
-  Metric                           Result
-  ------------------- -------------------
-  File Hit Rate @3                **92%**
-  Faithfulness                   **0.91**
-  Answer Relevancy               **0.88**
-  Context Precision              **0.87**
-  Latency (p95, baseline)   **~808.7 ms**
-  Latency (p95, cached)     **~291.6 ms**
-
-The evaluation uses a verified golden dataset and strict retrieval
-evaluation.
-
-------------------------------------------------------------------------
 
 # ⚡ Cache Performance Benchmark
 
@@ -761,7 +732,15 @@ These tests evaluate how well the intelligence engine can parse raw SQL dialects
 
 ### RAG Retrieval & Answer Quality Benchmarks
 * **`eval/benchmark_reranker.py`**: Evaluates the effectiveness of the cross-encoder heuristic reranking (making sure the most relevant code chunks appear at the top).
-* **`eval/evaluate_rag.py`** & **`eval/evaluate_ragas.py`**: Evaluates the end-to-end quality of the generated AI responses (Contextual Precision, Faithfulness, etc.) against a dataset of "Golden" Q&A pairs (like `eval/goldenset.json`).
+* **`eval/evaluate_rag.py`** & **`eval/evaluate_ragas.py`**: Evaluates the end-to-end quality of the generated AI responses using the `ragas` framework against a "Golden" dataset.
+
+#### Qdrant Retrieval & Ragas Generation Quality
+| Metric | Score | Description |
+|--------|-------|-------------|
+| **File Hit Rate @3** | **92%** | Frequency that the correct source file is in the top 3 Qdrant vector results. |
+| **Faithfulness** | **0.91** | (Ragas) Measures if the generated answer is factually rooted in the retrieved context. |
+| **Answer Relevancy** | **0.88** | (Ragas) Measures how directly the generated answer addresses the user's question. |
+| **Context Precision** | **0.87** | (Ragas) Measures whether the most relevant Qdrant chunks were ranked highest. |
 
 ### Performance & Latency Benchmarks
 * **`eval/benchmark_cache.py`**: Measures the retrieval speedup (latency) using our LRU caching layers vs a cold start.
@@ -774,6 +753,12 @@ These tests evaluate how well the intelligence engine can parse raw SQL dialects
 | p50    | 527.40 ms | **159.38 ms** | **3.31×** |
 | p95    | 651.17 ms | **220.03 ms** | **2.96×** |
 | p99    | 729.89 ms | **236.93 ms** | **3.08×** |
+| Min (p0) | 478.18 ms | **118.11 ms** | — |
+| Max (p100)| 1769.92 ms| **273.17 ms** | — |
+
+**Cache Hit Rates:**
+* **Embedding Cache (Gemini API)**: 50.0%
+* **Vector Search Cache (Qdrant)**: 50.0%
 
 > *Generated automatically via `eval/benchmark_report.md`*
 
