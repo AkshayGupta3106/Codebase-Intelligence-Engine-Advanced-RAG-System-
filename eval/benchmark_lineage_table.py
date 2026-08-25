@@ -55,9 +55,12 @@ def get_predicted_edges(repo_path: str):
 
 def main():
     import argparse
+    default_repo = os.path.join(os.path.dirname(__file__), "..", "jaffle_shop")
+    default_manifest = os.path.join(default_repo, "target", "manifest.json")
+    
     parser = argparse.ArgumentParser()
-    parser.add_argument("--manifest", required=True, help="Path to manifest.json")
-    parser.add_argument("--repo", required=True, help="Path to dbt repo")
+    parser.add_argument("--manifest", default=default_manifest, help="Path to manifest.json")
+    parser.add_argument("--repo", default=default_repo, help="Path to dbt repo")
     args = parser.parse_args()
     
     true_edges = get_dbt_manifest_edges(args.manifest)
