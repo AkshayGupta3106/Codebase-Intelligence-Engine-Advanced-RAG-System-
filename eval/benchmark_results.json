@@ -1,0 +1,732 @@
+{
+  "baseline": {
+    "mean_ms": 516.24,
+    "min_ms": 337.3,
+    "max_ms": 1187.69,
+    "p50_ms": 467.69,
+    "p95_ms": 808.7,
+    "p99_ms": 1167.87,
+    "n": 100
+  },
+  "cached": {
+    "mean_ms": 187.75,
+    "min_ms": 134.79,
+    "max_ms": 504.06,
+    "p50_ms": 169.45,
+    "p95_ms": 291.6,
+    "p99_ms": 457.85,
+    "n": 100
+  },
+  "speedup": {
+    "p50_x": 2.76,
+    "p95_x": 2.77,
+    "p99_x": 2.55,
+    "mean_x": 2.75
+  },
+  "cache_hit_rate": {
+    "embedding_pct": 50.0,
+    "search_pct": 50.0
+  },
+  "per_query": [
+    {
+      "query": "which function calls db_check",
+      "baseline_ms": 1187.69,
+      "chunks": 5,
+      "cached_ms": 504.06,
+      "speedup_x": 2.36
+    },
+    {
+      "query": "who calls db_check",
+      "baseline_ms": 699.12,
+      "chunks": 5,
+      "cached_ms": 335.14,
+      "speedup_x": 2.09
+    },
+    {
+      "query": "which function calls validate_user",
+      "baseline_ms": 440.59,
+      "chunks": 5,
+      "cached_ms": 264.17,
+      "speedup_x": 1.67
+    },
+    {
+      "query": "where is validate_user used",
+      "baseline_ms": 474.68,
+      "chunks": 5,
+      "cached_ms": 200.52,
+      "speedup_x": 2.37
+    },
+    {
+      "query": "what does login do",
+      "baseline_ms": 570.23,
+      "chunks": 5,
+      "cached_ms": 207.8,
+      "speedup_x": 2.74
+    },
+    {
+      "query": "show login flow",
+      "baseline_ms": 451.49,
+      "chunks": 5,
+      "cached_ms": 266.35,
+      "speedup_x": 1.7
+    },
+    {
+      "query": "which functions are called by login",
+      "baseline_ms": 516.5,
+      "chunks": 5,
+      "cached_ms": 308.6,
+      "speedup_x": 1.67
+    },
+    {
+      "query": "what does validate_user do",
+      "baseline_ms": 514.17,
+      "chunks": 5,
+      "cached_ms": 153.78,
+      "speedup_x": 3.34
+    },
+    {
+      "query": "which functions are called by validate_user",
+      "baseline_ms": 524.36,
+      "chunks": 5,
+      "cached_ms": 163.53,
+      "speedup_x": 3.21
+    },
+    {
+      "query": "what is the flow of validate_user",
+      "baseline_ms": 449.01,
+      "chunks": 5,
+      "cached_ms": 162.59,
+      "speedup_x": 2.76
+    },
+    {
+      "query": "which function calls save_session",
+      "baseline_ms": 453.27,
+      "chunks": 5,
+      "cached_ms": 135.95,
+      "speedup_x": 3.33
+    },
+    {
+      "query": "what does create_session do",
+      "baseline_ms": 524.27,
+      "chunks": 5,
+      "cached_ms": 134.79,
+      "speedup_x": 3.89
+    },
+    {
+      "query": "which functions are called by create_session",
+      "baseline_ms": 501.6,
+      "chunks": 5,
+      "cached_ms": 161.42,
+      "speedup_x": 3.11
+    },
+    {
+      "query": "which function calls log_attempt",
+      "baseline_ms": 617.33,
+      "chunks": 5,
+      "cached_ms": 172.53,
+      "speedup_x": 3.58
+    },
+    {
+      "query": "what does db_check do",
+      "baseline_ms": 557.13,
+      "chunks": 5,
+      "cached_ms": 219.6,
+      "speedup_x": 2.54
+    },
+    {
+      "query": "which function calls connect_db",
+      "baseline_ms": 566.57,
+      "chunks": 5,
+      "cached_ms": 151.01,
+      "speedup_x": 3.75
+    },
+    {
+      "query": "who calls connect_db",
+      "baseline_ms": 512.55,
+      "chunks": 5,
+      "cached_ms": 161.27,
+      "speedup_x": 3.18
+    },
+    {
+      "query": "where is db_check used",
+      "baseline_ms": 582.42,
+      "chunks": 5,
+      "cached_ms": 185.78,
+      "speedup_x": 3.14
+    },
+    {
+      "query": "what is the flow of login",
+      "baseline_ms": 521.04,
+      "chunks": 5,
+      "cached_ms": 135.54,
+      "speedup_x": 3.84
+    },
+    {
+      "query": "which functions are involved in login",
+      "baseline_ms": 1031.78,
+      "chunks": 5,
+      "cached_ms": 144.87,
+      "speedup_x": 7.12
+    },
+    {
+      "query": "how does login work",
+      "baseline_ms": 1167.87,
+      "chunks": 5,
+      "cached_ms": 176.13,
+      "speedup_x": 6.63
+    },
+    {
+      "query": "what does log_attempt do",
+      "baseline_ms": 975.15,
+      "chunks": 5,
+      "cached_ms": 153.71,
+      "speedup_x": 6.34
+    },
+    {
+      "query": "which function calls create_session",
+      "baseline_ms": 1070.31,
+      "chunks": 5,
+      "cached_ms": 217.95,
+      "speedup_x": 4.91
+    },
+    {
+      "query": "how is session created",
+      "baseline_ms": 629.93,
+      "chunks": 5,
+      "cached_ms": 159.52,
+      "speedup_x": 3.95
+    },
+    {
+      "query": "which functions are called inside create_session",
+      "baseline_ms": 417.05,
+      "chunks": 5,
+      "cached_ms": 243.53,
+      "speedup_x": 1.71
+    },
+    {
+      "query": "what does save_session do",
+      "baseline_ms": 511.74,
+      "chunks": 5,
+      "cached_ms": 146.06,
+      "speedup_x": 3.5
+    },
+    {
+      "query": "which function calls generate_token",
+      "baseline_ms": 718.78,
+      "chunks": 5,
+      "cached_ms": 146.35,
+      "speedup_x": 4.91
+    },
+    {
+      "query": "what does generate_token do",
+      "baseline_ms": 738.97,
+      "chunks": 5,
+      "cached_ms": 226.27,
+      "speedup_x": 3.27
+    },
+    {
+      "query": "where is generate_token used",
+      "baseline_ms": 808.7,
+      "chunks": 5,
+      "cached_ms": 213.12,
+      "speedup_x": 3.79
+    },
+    {
+      "query": "which functions are involved in authentication",
+      "baseline_ms": 742.51,
+      "chunks": 5,
+      "cached_ms": 141.41,
+      "speedup_x": 5.25
+    },
+    {
+      "query": "what happens during login process",
+      "baseline_ms": 611.52,
+      "chunks": 5,
+      "cached_ms": 167.36,
+      "speedup_x": 3.65
+    },
+    {
+      "query": "which functions are part of database interaction",
+      "baseline_ms": 535.06,
+      "chunks": 5,
+      "cached_ms": 165.18,
+      "speedup_x": 3.24
+    },
+    {
+      "query": "what functions connect to the database",
+      "baseline_ms": 605.4,
+      "chunks": 5,
+      "cached_ms": 161.72,
+      "speedup_x": 3.74
+    },
+    {
+      "query": "which functions are indirectly involved in connect_db",
+      "baseline_ms": 429.08,
+      "chunks": 5,
+      "cached_ms": 169.45,
+      "speedup_x": 2.53
+    },
+    {
+      "query": "which function calls db_check",
+      "baseline_ms": 444.95,
+      "chunks": 5,
+      "cached_ms": 166.49,
+      "speedup_x": 2.67
+    },
+    {
+      "query": "who calls db_check",
+      "baseline_ms": 505.98,
+      "chunks": 5,
+      "cached_ms": 166.19,
+      "speedup_x": 3.04
+    },
+    {
+      "query": "which function calls validate_user",
+      "baseline_ms": 462.37,
+      "chunks": 5,
+      "cached_ms": 159.56,
+      "speedup_x": 2.9
+    },
+    {
+      "query": "where is validate_user used",
+      "baseline_ms": 400.29,
+      "chunks": 5,
+      "cached_ms": 188.01,
+      "speedup_x": 2.13
+    },
+    {
+      "query": "what does login do",
+      "baseline_ms": 454.14,
+      "chunks": 5,
+      "cached_ms": 150.78,
+      "speedup_x": 3.01
+    },
+    {
+      "query": "show login flow",
+      "baseline_ms": 467.69,
+      "chunks": 5,
+      "cached_ms": 150.87,
+      "speedup_x": 3.1
+    },
+    {
+      "query": "which functions are called by login",
+      "baseline_ms": 544.93,
+      "chunks": 5,
+      "cached_ms": 191.71,
+      "speedup_x": 2.84
+    },
+    {
+      "query": "what does validate_user do",
+      "baseline_ms": 408.48,
+      "chunks": 5,
+      "cached_ms": 165.72,
+      "speedup_x": 2.46
+    },
+    {
+      "query": "which functions are called by validate_user",
+      "baseline_ms": 478.23,
+      "chunks": 5,
+      "cached_ms": 142.77,
+      "speedup_x": 3.35
+    },
+    {
+      "query": "what is the flow of validate_user",
+      "baseline_ms": 383.41,
+      "chunks": 5,
+      "cached_ms": 162.02,
+      "speedup_x": 2.37
+    },
+    {
+      "query": "which function calls save_session",
+      "baseline_ms": 455.72,
+      "chunks": 5,
+      "cached_ms": 168.7,
+      "speedup_x": 2.7
+    },
+    {
+      "query": "what does create_session do",
+      "baseline_ms": 420.02,
+      "chunks": 5,
+      "cached_ms": 164.05,
+      "speedup_x": 2.56
+    },
+    {
+      "query": "which functions are called by create_session",
+      "baseline_ms": 698.7,
+      "chunks": 5,
+      "cached_ms": 145.01,
+      "speedup_x": 4.82
+    },
+    {
+      "query": "which function calls log_attempt",
+      "baseline_ms": 414.26,
+      "chunks": 5,
+      "cached_ms": 160.94,
+      "speedup_x": 2.57
+    },
+    {
+      "query": "what does db_check do",
+      "baseline_ms": 455.91,
+      "chunks": 5,
+      "cached_ms": 250.87,
+      "speedup_x": 1.82
+    },
+    {
+      "query": "which function calls connect_db",
+      "baseline_ms": 456.63,
+      "chunks": 5,
+      "cached_ms": 159.28,
+      "speedup_x": 2.87
+    },
+    {
+      "query": "who calls connect_db",
+      "baseline_ms": 440.74,
+      "chunks": 5,
+      "cached_ms": 172.55,
+      "speedup_x": 2.55
+    },
+    {
+      "query": "where is db_check used",
+      "baseline_ms": 482.93,
+      "chunks": 5,
+      "cached_ms": 152.89,
+      "speedup_x": 3.16
+    },
+    {
+      "query": "what is the flow of login",
+      "baseline_ms": 407.92,
+      "chunks": 5,
+      "cached_ms": 182.41,
+      "speedup_x": 2.24
+    },
+    {
+      "query": "which functions are involved in login",
+      "baseline_ms": 419.74,
+      "chunks": 5,
+      "cached_ms": 400.63,
+      "speedup_x": 1.05
+    },
+    {
+      "query": "how does login work",
+      "baseline_ms": 500.56,
+      "chunks": 5,
+      "cached_ms": 184.37,
+      "speedup_x": 2.72
+    },
+    {
+      "query": "what does log_attempt do",
+      "baseline_ms": 405.13,
+      "chunks": 5,
+      "cached_ms": 225.89,
+      "speedup_x": 1.79
+    },
+    {
+      "query": "which function calls create_session",
+      "baseline_ms": 527.14,
+      "chunks": 5,
+      "cached_ms": 134.85,
+      "speedup_x": 3.91
+    },
+    {
+      "query": "how is session created",
+      "baseline_ms": 604.8,
+      "chunks": 5,
+      "cached_ms": 156.79,
+      "speedup_x": 3.86
+    },
+    {
+      "query": "which functions are called inside create_session",
+      "baseline_ms": 443.34,
+      "chunks": 5,
+      "cached_ms": 162.12,
+      "speedup_x": 2.73
+    },
+    {
+      "query": "what does save_session do",
+      "baseline_ms": 415.56,
+      "chunks": 5,
+      "cached_ms": 145.7,
+      "speedup_x": 2.85
+    },
+    {
+      "query": "which function calls generate_token",
+      "baseline_ms": 462.06,
+      "chunks": 5,
+      "cached_ms": 147.96,
+      "speedup_x": 3.12
+    },
+    {
+      "query": "what does generate_token do",
+      "baseline_ms": 517.25,
+      "chunks": 5,
+      "cached_ms": 174.98,
+      "speedup_x": 2.96
+    },
+    {
+      "query": "where is generate_token used",
+      "baseline_ms": 523.1,
+      "chunks": 5,
+      "cached_ms": 205.71,
+      "speedup_x": 2.54
+    },
+    {
+      "query": "which functions are involved in authentication",
+      "baseline_ms": 361.26,
+      "chunks": 5,
+      "cached_ms": 171.87,
+      "speedup_x": 2.1
+    },
+    {
+      "query": "what happens during login process",
+      "baseline_ms": 337.3,
+      "chunks": 5,
+      "cached_ms": 159.1,
+      "speedup_x": 2.12
+    },
+    {
+      "query": "which functions are part of database interaction",
+      "baseline_ms": 429.62,
+      "chunks": 5,
+      "cached_ms": 185.42,
+      "speedup_x": 2.32
+    },
+    {
+      "query": "what functions connect to the database",
+      "baseline_ms": 366.59,
+      "chunks": 5,
+      "cached_ms": 136.07,
+      "speedup_x": 2.69
+    },
+    {
+      "query": "which functions are indirectly involved in connect_db",
+      "baseline_ms": 377.97,
+      "chunks": 5,
+      "cached_ms": 149.62,
+      "speedup_x": 2.53
+    },
+    {
+      "query": "which function calls db_check",
+      "baseline_ms": 347.45,
+      "chunks": 5,
+      "cached_ms": 163.08,
+      "speedup_x": 2.13
+    },
+    {
+      "query": "who calls db_check",
+      "baseline_ms": 370.89,
+      "chunks": 5,
+      "cached_ms": 135.17,
+      "speedup_x": 2.74
+    },
+    {
+      "query": "which function calls validate_user",
+      "baseline_ms": 377.6,
+      "chunks": 5,
+      "cached_ms": 171.26,
+      "speedup_x": 2.2
+    },
+    {
+      "query": "where is validate_user used",
+      "baseline_ms": 409.08,
+      "chunks": 5,
+      "cached_ms": 171.23,
+      "speedup_x": 2.39
+    },
+    {
+      "query": "what does login do",
+      "baseline_ms": 398.75,
+      "chunks": 5,
+      "cached_ms": 291.6,
+      "speedup_x": 1.37
+    },
+    {
+      "query": "show login flow",
+      "baseline_ms": 414.58,
+      "chunks": 5,
+      "cached_ms": 155.71,
+      "speedup_x": 2.66
+    },
+    {
+      "query": "which functions are called by login",
+      "baseline_ms": 416.85,
+      "chunks": 5,
+      "cached_ms": 226.03,
+      "speedup_x": 1.84
+    },
+    {
+      "query": "what does validate_user do",
+      "baseline_ms": 446.04,
+      "chunks": 5,
+      "cached_ms": 153.66,
+      "speedup_x": 2.9
+    },
+    {
+      "query": "which functions are called by validate_user",
+      "baseline_ms": 467.6,
+      "chunks": 5,
+      "cached_ms": 180.14,
+      "speedup_x": 2.6
+    },
+    {
+      "query": "what is the flow of validate_user",
+      "baseline_ms": 519.56,
+      "chunks": 5,
+      "cached_ms": 156.86,
+      "speedup_x": 3.31
+    },
+    {
+      "query": "which function calls save_session",
+      "baseline_ms": 473.14,
+      "chunks": 5,
+      "cached_ms": 186.98,
+      "speedup_x": 2.53
+    },
+    {
+      "query": "what does create_session do",
+      "baseline_ms": 450.17,
+      "chunks": 5,
+      "cached_ms": 160.99,
+      "speedup_x": 2.8
+    },
+    {
+      "query": "which functions are called by create_session",
+      "baseline_ms": 511.41,
+      "chunks": 5,
+      "cached_ms": 205.78,
+      "speedup_x": 2.49
+    },
+    {
+      "query": "which function calls log_attempt",
+      "baseline_ms": 403.78,
+      "chunks": 5,
+      "cached_ms": 172.47,
+      "speedup_x": 2.34
+    },
+    {
+      "query": "what does db_check do",
+      "baseline_ms": 481.42,
+      "chunks": 5,
+      "cached_ms": 199.59,
+      "speedup_x": 2.41
+    },
+    {
+      "query": "which function calls connect_db",
+      "baseline_ms": 511.37,
+      "chunks": 5,
+      "cached_ms": 179.91,
+      "speedup_x": 2.84
+    },
+    {
+      "query": "who calls connect_db",
+      "baseline_ms": 435.56,
+      "chunks": 5,
+      "cached_ms": 179.72,
+      "speedup_x": 2.42
+    },
+    {
+      "query": "where is db_check used",
+      "baseline_ms": 433.62,
+      "chunks": 5,
+      "cached_ms": 195.2,
+      "speedup_x": 2.22
+    },
+    {
+      "query": "what is the flow of login",
+      "baseline_ms": 491.01,
+      "chunks": 5,
+      "cached_ms": 170.89,
+      "speedup_x": 2.87
+    },
+    {
+      "query": "which functions are involved in login",
+      "baseline_ms": 426.33,
+      "chunks": 5,
+      "cached_ms": 187.58,
+      "speedup_x": 2.27
+    },
+    {
+      "query": "how does login work",
+      "baseline_ms": 499.84,
+      "chunks": 5,
+      "cached_ms": 153.89,
+      "speedup_x": 3.25
+    },
+    {
+      "query": "what does log_attempt do",
+      "baseline_ms": 512.45,
+      "chunks": 5,
+      "cached_ms": 226.17,
+      "speedup_x": 2.27
+    },
+    {
+      "query": "which function calls create_session",
+      "baseline_ms": 505.08,
+      "chunks": 5,
+      "cached_ms": 187.53,
+      "speedup_x": 2.69
+    },
+    {
+      "query": "how is session created",
+      "baseline_ms": 548.16,
+      "chunks": 5,
+      "cached_ms": 169.5,
+      "speedup_x": 3.23
+    },
+    {
+      "query": "which functions are called inside create_session",
+      "baseline_ms": 587.45,
+      "chunks": 5,
+      "cached_ms": 177.07,
+      "speedup_x": 3.32
+    },
+    {
+      "query": "what does save_session do",
+      "baseline_ms": 429.91,
+      "chunks": 5,
+      "cached_ms": 190.84,
+      "speedup_x": 2.25
+    },
+    {
+      "query": "which function calls generate_token",
+      "baseline_ms": 481.21,
+      "chunks": 5,
+      "cached_ms": 155.94,
+      "speedup_x": 3.09
+    },
+    {
+      "query": "what does generate_token do",
+      "baseline_ms": 440.65,
+      "chunks": 5,
+      "cached_ms": 203.37,
+      "speedup_x": 2.17
+    },
+    {
+      "query": "where is generate_token used",
+      "baseline_ms": 427.4,
+      "chunks": 5,
+      "cached_ms": 457.85,
+      "speedup_x": 0.93
+    },
+    {
+      "query": "which functions are involved in authentication",
+      "baseline_ms": 419.9,
+      "chunks": 5,
+      "cached_ms": 159.95,
+      "speedup_x": 2.63
+    },
+    {
+      "query": "what happens during login process",
+      "baseline_ms": 460.35,
+      "chunks": 5,
+      "cached_ms": 178.63,
+      "speedup_x": 2.58
+    },
+    {
+      "query": "which functions are part of database interaction",
+      "baseline_ms": 393.26,
+      "chunks": 5,
+      "cached_ms": 271.75,
+      "speedup_x": 1.45
+    }
+  ]
+}

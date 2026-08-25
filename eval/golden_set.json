@@ -1,0 +1,30 @@
+[
+    {
+        "query": "How is the customer lifetime value calculated?",
+        "expected_file": "customers.sql"
+    },
+    {
+        "query": "Where does the first name of a customer come from?",
+        "expected_file": "stg_customers.sql"
+    },
+    {
+        "query": "Show me how orders are staged.",
+        "expected_file": "stg_orders.sql"
+    },
+    {
+        "query": "What model aggregates payments?",
+        "expected_file": "stg_payments.sql"
+    },
+    {
+        "query": "Who depends on the raw customers table?",
+        "expected_file": "stg_customers.sql"
+    },
+    {
+        "query": "How many orders did a customer make?",
+        "expected_file": "customers.sql"
+    },
+    {
+        "query": "What is the most recent order date?",
+        "expected_file": "customers.sql"
+    }
+]
