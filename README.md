@@ -739,6 +739,26 @@ Cached path (per query, warm cache):
 
 ------------------------------------------------------------------------
 
+# 🧪 Evaluation & Benchmarks Overview
+
+All of the benchmark tests are located inside the `eval/` directory. Here is a breakdown of what each benchmark does and where to find them:
+
+### Data Engineering / SQL Lineage Benchmarks
+These tests evaluate how well the intelligence engine can parse raw SQL dialects and map out dependencies compared to dbt's native compiler:
+* **`eval/benchmark_sql_parsing.py`**: Measures parsing success rates and parse-time (in milliseconds) across a repository of raw SQL models.
+* **`eval/benchmark_lineage_table.py`**: Compares the predicted table-to-table dependencies against dbt's actual `manifest.json` (Precision/Recall).
+* **`eval/benchmark_lineage_column.py`**: Tests the granular column-level lineage and downstream impact mappings.
+
+### RAG Retrieval & Answer Quality Benchmarks
+* **`eval/benchmark_reranker.py`**: Evaluates the effectiveness of the cross-encoder heuristic reranking (making sure the most relevant code chunks appear at the top).
+* **`eval/evaluate_rag.py`** & **`eval/evaluate_ragas.py`**: Evaluates the end-to-end quality of the generated AI responses (Contextual Precision, Faithfulness, etc.) against a dataset of "Golden" Q&A pairs (like `eval/goldenset.json`).
+
+### Performance & Latency Benchmarks
+* **`eval/benchmark_cache.py`**: Measures the retrieval speedup (latency) using our LRU caching layers vs a cold start.
+  * **Results Output:** This script automatically generates `eval/benchmark_report.md` and `eval/benchmark_results.json`.
+
+------------------------------------------------------------------------
+
 # 📁 Project Structure
 
 ``` text
