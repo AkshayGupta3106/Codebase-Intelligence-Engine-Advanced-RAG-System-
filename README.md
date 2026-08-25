@@ -744,10 +744,20 @@ Cached path (per query, warm cache):
 All of the benchmark tests are located inside the `eval/` directory. Here is a breakdown of what each benchmark does and where to find them:
 
 ### Data Engineering / SQL Lineage Benchmarks
-These tests evaluate how well the intelligence engine can parse raw SQL dialects and map out dependencies compared to dbt's native compiler:
-* **`eval/benchmark_sql_parsing.py`**: Measures parsing success rates and parse-time (in milliseconds) across a repository of raw SQL models.
-* **`eval/benchmark_lineage_table.py`**: Compares the predicted table-to-table dependencies against dbt's actual `manifest.json` (Precision/Recall).
-* **`eval/benchmark_lineage_column.py`**: Tests the granular column-level lineage and downstream impact mappings.
+These tests evaluate how well the intelligence engine can parse raw SQL dialects and map out dependencies compared to dbt's native compiler.
+
+#### 1. SQL Parser Performance (`eval/benchmark_sql_parsing.py`)
+| Metric | Result |
+|--------|--------|
+| Total Models Parsed | 5 |
+| Parse Success Rate | **100.0%** |
+| Mean Parse Time | **2.9 ms / model** |
+
+#### 2. Lineage Accuracy (`eval/benchmark_lineage_table.py` & `column.py`)
+| Metric | Precision | Recall | Spurious (FP) |
+|--------|-----------|--------|---------------|
+| Table-Level Lineage | **100%** (1.000) | **100%** (1.000) | 0.0% |
+| Column-Level Lineage| **100%** (1.000) | 33.3% (0.333) | 0.0% |
 
 ### RAG Retrieval & Answer Quality Benchmarks
 * **`eval/benchmark_reranker.py`**: Evaluates the effectiveness of the cross-encoder heuristic reranking (making sure the most relevant code chunks appear at the top).
@@ -755,7 +765,17 @@ These tests evaluate how well the intelligence engine can parse raw SQL dialects
 
 ### Performance & Latency Benchmarks
 * **`eval/benchmark_cache.py`**: Measures the retrieval speedup (latency) using our LRU caching layers vs a cold start.
-  * **Results Output:** This script automatically generates `eval/benchmark_report.md` and `eval/benchmark_results.json`.
+
+**Results (100-Query Eval Set):**
+
+| Metric | Baseline (no cache) | Cached (warm) | Speedup |
+|--------|--------------------:|---------------:|--------:|
+| Mean   | 554.81 ms | **164.18 ms** | **3.38×** |
+| p50    | 527.40 ms | **159.38 ms** | **3.31×** |
+| p95    | 651.17 ms | **220.03 ms** | **2.96×** |
+| p99    | 729.89 ms | **236.93 ms** | **3.08×** |
+
+> *Generated automatically via `eval/benchmark_report.md`*
 
 ------------------------------------------------------------------------
 
