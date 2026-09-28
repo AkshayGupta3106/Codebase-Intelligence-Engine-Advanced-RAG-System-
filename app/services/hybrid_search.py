@@ -26,19 +26,7 @@ _reranker_available: Optional[bool] = None
 
 def _get_reranker():
     """Return a cached CrossEncoder instance, or None if unavailable."""
-    global _reranker, _reranker_available
-    if _reranker_available is False:
-        return None
-    if _reranker is not None:
-        return _reranker
-    try:
-        from sentence_transformers import CrossEncoder  # type: ignore
-        _reranker = CrossEncoder(_CROSS_ENCODER_MODEL)
-        _reranker_available = True
-        return _reranker
-    except Exception:
-        _reranker_available = False
-        return None
+    return None
 
 
 def log_memory(stage: str):

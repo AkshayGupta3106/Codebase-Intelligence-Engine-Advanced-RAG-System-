@@ -3,6 +3,7 @@ from typing import Literal
 
 import networkx as nx
 import psycopg2
+from functools import lru_cache
 
 
 _call_graph_digraph = nx.DiGraph()
@@ -151,6 +152,7 @@ def expand_with_graph_mode(
     return expanded_functions
 
 
+@lru_cache(maxsize=1000)
 def get_call_graph_for_file(file_name: str) -> dict[str, list[str]]:
     if not file_name:
         return {}
