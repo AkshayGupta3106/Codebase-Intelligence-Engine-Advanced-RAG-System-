@@ -1,97 +1,331 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+/* ─────────────────────────────────────────────────────────────────────────────
+   Google Fonts — Inter (UI) + JetBrains Mono (code/metrics)
+───────────────────────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   CSS custom properties — single source of truth for the design system
+   Override in :root[class~="light"] for the light theme.
+───────────────────────────────────────────────────────────────────────────── */
 :root {
-  font-family: "Outfit", "Space Grotesk", system-ui, sans-serif;
+  /* Backgrounds */
+  --bg-base:     #030712;
+  --bg-surface:  #060d1f;
+  --bg-elevated: #0b1328;
+  --bg-overlay:  #101a35;
+
+  /* Borders (hairline) */
+  --border-subtle: rgba(255,255,255,0.04);
+  --border-base:   rgba(255,255,255,0.08);
+  --border-strong: rgba(255,255,255,0.14);
+
+  /* Text */
+  --text-primary:   #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted:     #475569;
+  --text-xmuted:    #2d3a52;
+
+  /* Accent: electric violet */
+  --accent:       #8b5cf6;
+  --accent-dim:   rgba(139,92,246,0.12);
+  --accent-border:rgba(139,92,246,0.30);
+
+  /* Status colours */
+  --green:  #34d399;
+  --amber:  #fbbf24;
+  --red:    #f87171;
+  --blue:   #38bdf8;
+  --indigo: #818cf8;
+
+  /* Sidebar / right-panel widths (set via JS too) */
+  --sidebar-w:      272px;
+  --right-panel-w:  360px;
+  --topbar-h:       48px;
+
+  font-family: 'Inter', system-ui, sans-serif;
+  font-feature-settings: 'cv02','cv03','cv04','cv11';
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-.font-mono-ide {
-  font-family: "JetBrains Mono", monospace;
+/* Light theme overrides */
+:root.light {
+  --bg-base:     #f8fafc;
+  --bg-surface:  #ffffff;
+  --bg-elevated: #f1f5f9;
+  --bg-overlay:  #e2e8f0;
+
+  --border-subtle: rgba(0,0,0,0.04);
+  --border-base:   rgba(0,0,0,0.08);
+  --border-strong: rgba(0,0,0,0.14);
+
+  --text-primary:   #0f172a;
+  --text-secondary: #475569;
+  --text-muted:     #94a3b8;
+  --text-xmuted:    #cbd5e1;
+
+  --accent-dim:   rgba(139,92,246,0.08);
+  --accent-border:rgba(139,92,246,0.25);
 }
 
-html,
-body,
-#root {
-  min-height: 100%;
-  overflow-x: hidden;
+/* ─────────────────────────────────────────────────────────────────────────────
+   Base reset
+───────────────────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body, #root {
+  height: 100%;
+  overflow: hidden;   /* layout uses flex; panels scroll internally */
 }
 
 body {
   margin: 0;
-  background-color: #040814; /* Deep premium midnight blue/black */
-  color: #f1f5f9; /* Slate 100 for crisp text */
+  background-color: var(--bg-base);
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(56, 189, 248, 0.12) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(52, 211, 153, 0.1) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(139, 92, 246, 0.1) 0px, transparent 50%);
+  background-attachment: fixed;
+  color: var(--text-primary);
+  position: relative;
 }
 
-/* Glass panel utility */
-.glass-panel {
-  background: rgba(15, 23, 42, 0.4);
+/* Premium noise texture */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  opacity: 0.4;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Scrollbars — thin and minimal
+───────────────────────────────────────────────────────────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139,92,246,0.18) transparent;
+}
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(139,92,246,0.18); border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(139,92,246,0.35); }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Utility classes (used in JSX)
+───────────────────────────────────────────────────────────────────────────── */
+
+/* Glass panel — command bar, popovers only */
+.glass {
+  background: rgba(10, 15, 30, 0.4);
+  backdrop-filter: blur(28px) saturate(1.5);
+  -webkit-backdrop-filter: blur(28px) saturate(1.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.08);
+}
+:root.light .glass {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.6);
+}
+
+/* Flat panel — sidebar / right panel content */
+.panel {
+  background: rgba(6, 13, 31, 0.6);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border-base);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
 }
 
-/* Main app scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.15);
-  border-radius: 9999px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.3);
-}
-
-.code-scroll::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-.code-scroll::-webkit-scrollbar-track {
-  background: rgba(2, 6, 23, 0.2);
-  border-radius: 9999px;
-}
-
-.code-scroll::-webkit-scrollbar-thumb {
-  background: rgba(56, 189, 248, 0.3);
-  border-radius: 9999px;
-}
-
-.code-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(56, 189, 248, 0.6);
-}
-
-/* Glass panel utility */
-.glass-panel {
-  background: rgba(255, 255, 255, 0.02);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 0 4px 40px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-}
-
+/* Gradient text utility */
 .text-gradient {
-  background: linear-gradient(to right, #4ade80, #3b82f6);
+  background: linear-gradient(135deg, #a78bfa 0%, #38bdf8 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* IDE syntax highlighting colors - Vibrant */
-.ide-keyword { color: #38bdf8; font-weight: bold; } /* Neon Blue */
-.ide-string { color: #a3e635; } /* Neon Lime Green */
-.ide-number { color: #f472b6; } /* Neon Pink */
-.ide-comment { color: #64748b; font-style: italic; } /* Slate */
-.ide-function { color: #fbbf24; } /* Amber */
-.ide-variable { color: #818cf8; } /* Indigo */
+/* Monospace — paths, metrics, code */
+.font-mono { font-family: 'JetBrains Mono', Menlo, monospace; }
+
+/* Focus ring — accessible, accent-colored */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Streaming caret */
+.stream-cursor::after {
+  content: '▋';
+  display: inline-block;
+  color: var(--accent);
+  animation: blink 0.85s step-end infinite;
+  margin-left: 2px;
+  font-size: 0.82em;
+  vertical-align: -0.05em;
+}
+
+@keyframes blink {
+  0%,100% { opacity: 1; }
+  50%      { opacity: 0; }
+}
+
+/* Skeleton shimmer */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-elevated) 25%,
+    rgba(139,92,246,0.06) 50%,
+    var(--bg-elevated) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Progress sweep bar */
+.progress-sweep {
+  animation: sweep 1.6s cubic-bezier(0.4,0,0.6,1) infinite;
+}
+@keyframes sweep {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}
+
+/* Ambient glow blobs (CSS-only, no JS re-renders) */
+.ambient-blob {
+  position: fixed;
+  border-radius: 9999px;
+  filter: blur(120px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   react-markdown prose overrides
+   (targets the .prose wrapper we add around ReactMarkdown output)
+───────────────────────────────────────────────────────────────────────────── */
+.prose {
+  color: var(--text-primary);
+  font-size: 0.8125rem;   /* 13px */
+  line-height: 1.75;
+  word-break: break-word;
+}
+
+.prose p   { margin: 0.35rem 0; }
+.prose strong { color: var(--text-primary); font-weight: 700; }
+.prose em     { color: var(--text-secondary); }
+
+.prose h1, .prose h2, .prose h3 {
+  color: var(--text-primary);
+  font-weight: 700;
+  margin: 1rem 0 0.35rem;
+  line-height: 1.3;
+}
+.prose h1 { font-size: 1.05rem; }
+.prose h2 { font-size: 0.95rem; }
+.prose h3 { font-size: 0.875rem; }
+
+.prose ul, .prose ol {
+  padding-left: 1.1rem;
+  margin: 0.4rem 0;
+  space-y: 0.2rem;
+}
+.prose li { margin: 0.15rem 0; }
+
+.prose code:not(pre code) {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  background: rgba(139,92,246,0.1);
+  color: #c4b5fd;
+  padding: 1px 5px;
+  border-radius: 4px;
+  border: 1px solid rgba(139,92,246,0.2);
+}
+:root.light .prose code:not(pre code) {
+  background: rgba(139,92,246,0.08);
+  color: #6d28d9;
+}
+
+.prose pre {
+  margin: 0.75rem 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border-base);
+  background: #010409 !important;
+}
+:root.light .prose pre {
+  background: #f6f8fa !important;
+}
+.prose pre code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.73rem;
+  line-height: 1.7;
+  display: block;
+  overflow-x: auto;
+  padding: 1rem;
+  background: transparent !important;
+}
+
+.prose hr { border-color: var(--border-base); margin: 1rem 0; }
+
+.prose a { color: var(--accent); text-decoration: underline; }
+
+.prose blockquote {
+  border-left: 3px solid var(--accent-border);
+  padding-left: 0.75rem;
+  color: var(--text-secondary);
+  margin: 0.5rem 0;
+}
+
+.prose table { width: 100%; border-collapse: collapse; font-size: 0.75rem; margin: 0.75rem 0; }
+.prose th, .prose td {
+  border: 1px solid var(--border-base);
+  padding: 0.35rem 0.6rem;
+  text-align: left;
+}
+.prose th { background: var(--bg-elevated); font-weight: 600; }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   ReactFlow canvas overrides
+───────────────────────────────────────────────────────────────────────────── */
+.react-flow__background { background: var(--bg-base) !important; }
+.react-flow__edge-path  { stroke: var(--accent-border) !important; stroke-width: 1.5px; }
+.react-flow__edge.selected .react-flow__edge-path { stroke: var(--accent) !important; }
+.react-flow__controls {
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border-base) !important;
+  box-shadow: none !important;
+  border-radius: 8px !important;
+  overflow: hidden;
+}
+.react-flow__controls-button {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--border-subtle) !important;
+  color: var(--text-secondary) !important;
+}
+.react-flow__controls-button:hover { background: var(--bg-elevated) !important; }
+.react-flow__minimap { border: 1px solid var(--border-base) !important; border-radius: 8px !important; overflow: hidden; }
+
+/* @media prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -308,3 +308,4 @@ Being upfront about what this does and doesn't do yet:
 [GitHub](https://github.com/AkshayGupta3106)
 
 ⭐ If you find this project useful, consider giving it a star.
+⭐ If you find this project useful, consider giving it a star.

@@ -202,34 +202,47 @@ def _generate_with_gemini(query: str, context: str) -> str:
     if not api_key:
         raise ValueError("GEMINI_API_KEY is not set")
 
-    model_name = os.getenv("GEMINI_CHAT_MODEL", "gemini-2.0-flash")
     _client = _genai.Client(api_key=api_key)
 
     user_prompt = (
-        "You are a code assistant.\n"
-        "Use the provided context to answer the question.\n\n"
+        "You are an expert code intelligence assistant.\n"
+        "Use the provided codebase context to answer the question thoroughly.\n\n"
         "Context:\n"
         f"{context}\n\n"
         "Question:\n"
         f"{query}\n\n"
-        "Answer clearly and concisely."
+        "Answer clearly, accurately, and concisely."
     )
 
-    response = _client.models.generate_content(
-        model=model_name,
-        contents=user_prompt,
-    )
-    text = ""
-    if hasattr(response, "text"):
-        text = response.text or ""
-    elif hasattr(response, "candidates"):
+    env_model = os.getenv("GEMINI_CHAT_MODEL", "").strip()
+    candidate_models = [env_model] if env_model else ["gemini-1.5-flash", "gemini-2.5-flash", "gemini-1.5-pro"]
+    if "gemini-1.5-flash" not in candidate_models:
+        candidate_models.append("gemini-1.5-flash")
+
+    last_exc = None
+    for model_name in candidate_models:
+        if not model_name:
+            continue
         try:
-            text = response.candidates[0].content.parts[0].text or ""
-        except (IndexError, AttributeError):
+            response = _client.models.generate_content(
+                model=model_name,
+                contents=user_prompt,
+            )
             text = ""
-    if not text.strip():
-        raise ValueError("Gemini returned an empty response")
-    return text.strip()
+            if hasattr(response, "text"):
+                text = response.text or ""
+            elif hasattr(response, "candidates"):
+                try:
+                    text = response.candidates[0].content.parts[0].text or ""
+                except (IndexError, AttributeError):
+                    text = ""
+            if text.strip():
+                return text.strip()
+        except Exception as exc:
+            logger.warning("Gemini model %s failed: %s", model_name, exc)
+            last_exc = exc
+
+    raise ValueError(f"Gemini generation failed on all models: {last_exc}")
 
 def _is_noise_file(file_name: str) -> bool:
     lowered = file_name.lower()
@@ -854,37 +867,57 @@ def _generate_local_answer(
         if flow_lines:
             return "Flow Explanation:\n" + "\n".join(flow_lines)
 
-    # 🔥 STEP 2: OLD LOGIC (unchanged)
-    def clean_words(text):
-        return set(re.findall(r'\b\w+\b', text.lower()))
+    # STEP 2: STRUCTURED LOCAL ANSWER GENERATION
+    top_chunks = chunks[:5]
+    summary_parts = []
+    
+    file_chunks: dict[str, list[dict[str, object]]] = {}
+    for c in top_chunks:
+        fname = str(c.get("file_name") or "unknown")
+        file_chunks.setdefault(fname, []).append(c)
 
-    top_chunks = chunks[:3]
-    combined_text = " ".join(str(c.get("chunk_text") or "")
-                             for c in top_chunks)
+    summary_parts.append(f"### Codebase Context Summary for Query: '{query}'\n")
+    summary_parts.append(f"Retrieved **{len(top_chunks)}** relevant chunk(s) across **{len(file_chunks)}** file(s):\n")
 
-    sentences = re.split(r'(?<=[.!?])\s+', combined_text.strip())
-    query_words = clean_words(query)
+    for fname, f_chunks in file_chunks.items():
+        summary_parts.append(f"#### 📄 File: `{fname}`")
+        for chunk in f_chunks:
+            symbol_name = chunk.get("name")
+            symbol_type = chunk.get("type")
+            start_line = chunk.get("start_line")
+            end_line = chunk.get("end_line")
+            
+            header_bits = []
+            if symbol_type and symbol_name and symbol_name != "<anonymous>":
+                header_bits.append(f"**{symbol_type} `{symbol_name}()`**")
+            if start_line and end_line:
+                header_bits.append(f"(Lines {start_line}-{end_line})")
+            
+            header = " ".join(header_bits) if header_bits else "Code Snippet"
+            raw_snippet = str(chunk.get("chunk_text") or "").strip()
+            snippet_lines = raw_snippet.splitlines()[:12]
+            truncated_code = "\n".join(snippet_lines)
+            if len(raw_snippet.splitlines()) > 12:
+                truncated_code += "\n..."
 
-    def score(sentence):
-        return len(clean_words(sentence) & query_words)
+            summary_parts.append(f"- {header}:\n```\n{truncated_code}\n```")
 
-    ranked = sorted(sentences, key=score, reverse=True)
-    best = [s for s in ranked if score(s) > 0][:1]
-
-    if not best:
-        best = sentences[:1]
-
-    return "Local Answer: " + " ".join(best)
+    return "\n\n".join(summary_parts)
 
 # The updated _generate_local_answer function first checks if the query is likely asking about the flow of function calls. If it detects flow-related terms, it tries to extract and return the flow explanation from the context. If not, it falls back to the original keyword-based sentence extraction method. This way, we can provide a more relevant answer for flow-related queries without needing an LLM.
 
 
 def generate_answer(query: str, context: str, chunks: list[dict[str, object]]) -> str:
-    """Try Gemini → Groq → Ollama → local-heuristic in order."""
-    provider = _get_llm_provider()
+    """Try Gemini → Groq → Ollama → local-heuristic in order.
 
-    # ── Gemini (always attempted first when GEMINI_API_KEY is present) ──────────
-    if os.getenv("GEMINI_API_KEY"):
+    If context is empty, skip LLM calls that would hallucinate and fall back
+    immediately to the structured local answer.
+    """
+    provider = _get_llm_provider()
+    has_context = bool(context and context.strip() and context.strip() != "=== Context ===")
+
+    # ── Gemini (only when we have real context) ──────────────────────────────
+    if has_context and os.getenv("GEMINI_API_KEY"):
         try:
             logger.debug("Attempting Gemini generation...")
             _log_generation_route("gemini")
@@ -900,12 +933,17 @@ def generate_answer(query: str, context: str, chunks: list[dict[str, object]]) -
             logger.warning("OpenAI generation failed: %s — falling back to local", exc)
             return _generate_local_answer(query=query, context=context, chunks=chunks)
 
-    # ── Groq ──────────────────────────────────────────────────────────────────
+    # ── Groq (runs even without context — Groq can still answer from query alone) ──
     if os.getenv("GROQ_API_KEY"):
         try:
             logger.debug("Attempting Groq generation...")
             _log_generation_route("groq")
-            return _generate_with_groq(query=query, context=context)
+            groq_context = context if has_context else (
+                "Note: No codebase context was retrieved from the vector database. "
+                "This may be because the repository was not yet indexed, or the embedding API is unavailable. "
+                "Answer based only on the question itself."
+            )
+            return _generate_with_groq(query=query, context=groq_context)
         except Exception as exc:
             logger.warning("Groq generation failed: %s — falling back to Ollama", exc)
 
@@ -920,6 +958,7 @@ def generate_answer(query: str, context: str, chunks: list[dict[str, object]]) -
     # ── Local heuristic (always available) ───────────────────────────────────
     _log_generation_route("local")
     return _generate_local_answer(query=query, context=context, chunks=chunks)
+
 
 
 
@@ -1097,7 +1136,21 @@ def run_rag_pipeline(
     log_memory("rag:after_retrieval")
 
     if not retrieved_chunks:
-        return "No relevant context found in the database. Please try rephrasing your query.", [], query_type, None
+        # Diagnose why retrieval failed
+        embedding_ok = not all(
+            v == 0.0 for v in (generate_embeddings(chunks=["test"])[0] if True else [])
+        )
+        if not embedding_ok:
+            diag = (
+                "⚠️ **Embedding API unavailable** — the GEMINI_API_KEY is missing or invalid, "
+                "so vector search returned no results. "
+                "The repository was indexed, but queries cannot retrieve relevant chunks without working embeddings.\n\n"
+                "**To fix:** Set a valid `GEMINI_API_KEY` in your `.env` file (should start with `AIza...`). "
+                "Your Groq key is configured and will be used for answer generation once embeddings work."
+            )
+        else:
+            diag = "No relevant context found in the database. Please try rephrasing your query."
+        return diag, [], query_type, None
 
     context = build_context(retrieved_chunks)
     unique_files = {

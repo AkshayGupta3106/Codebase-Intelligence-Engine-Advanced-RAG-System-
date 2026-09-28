@@ -11,7 +11,7 @@ from qdrant_client.models import MatchValue
 from qdrant_client.models import PointStruct
 from qdrant_client.models import VectorParams
 
-COLLECTION_NAME = "documents"
+COLLECTION_NAME = "documents_v2"
 QDRANT_LOCAL_PATH = Path("data/qdrant")
 
 _client: QdrantClient | None = None
@@ -42,7 +42,23 @@ def ensure_collection(vector_size: int, collection_name: str = COLLECTION_NAME) 
 	client = get_qdrant_client()
 
 	if client.collection_exists(collection_name=collection_name):
-		return
+		# Check for dimension mismatch — happens when switching embedding models
+		try:
+			info = client.get_collection(collection_name=collection_name)
+			existing_size = info.config.params.vectors.size
+			if existing_size != vector_size:
+				import logging as _log
+				_log.getLogger(__name__).warning(
+					"Collection '%s' has dim=%d but new embeddings have dim=%d — "
+					"dropping and recreating collection.",
+					collection_name, existing_size, vector_size,
+				)
+				client.delete_collection(collection_name=collection_name)
+				# Fall through to create with correct size
+			else:
+				return
+		except Exception:
+			return  # Can't verify, proceed optimistically
 
 	client.create_collection(
 		collection_name=collection_name,

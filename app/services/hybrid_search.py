@@ -149,11 +149,25 @@ def hybrid_search(query: str, top_k: int) -> list[dict[str, object]]:
     if top_k <= 0:
         raise ValueError("top_k must be greater than 0")
 
-    # Fix 4: Add safety check for empty embeddings
     embeddings = generate_embeddings(chunks=[query])
     if not embeddings:
         return []
     query_embedding = embeddings[0]
+
+    # Detect all-zero embedding (Gemini API key missing/invalid) → pure BM25 fallback
+    if all(v == 0.0 for v in query_embedding):
+        import logging as _logging
+        _logging.getLogger(__name__).warning(
+            "hybrid_search: query embedding is all-zeros — GEMINI_API_KEY may be invalid. "
+            "Falling back to BM25-only keyword search over all stored chunks."
+        )
+        all_chunks = _get_all_chunks()
+        if not all_chunks:
+            return []
+        chunk_texts = [str(c.get("chunk_text") or "") for c in all_chunks]
+        kw_scores = bm25_scores(query=query, documents=chunk_texts)
+        paired = sorted(zip(kw_scores, all_chunks), key=lambda p: p[0], reverse=True)
+        return [c for _, c in paired[:top_k]]
 
     log_memory("hybrid_search:before_semantic_search")
     semantic_results = search_similar_chunks(
@@ -165,7 +179,7 @@ def hybrid_search(query: str, top_k: int) -> list[dict[str, object]]:
     if not semantic_results:
         return []
 
-    # BM25 should only run on candidates from semantic search
+    # BM25 runs on semantic candidates
     all_chunks = semantic_results
 
     # Fix 1: Normalize semantic results

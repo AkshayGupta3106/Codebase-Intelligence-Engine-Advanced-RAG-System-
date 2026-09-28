@@ -9,6 +9,8 @@ _table_initialized = False
 
 
 def _postgres_dsn() -> str:
+    from dotenv import load_dotenv
+    load_dotenv(override=True)
     dsn = os.getenv("POSTGRES_DSN")
     return dsn or ""
 

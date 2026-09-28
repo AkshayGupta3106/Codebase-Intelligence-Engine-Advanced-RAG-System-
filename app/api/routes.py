@@ -159,11 +159,15 @@ async def ingest_document(
 					file_name=file_name,
 				)
 			except Exception:
-				# Fall back to naive chunking if AST parsing fails.
+				chunks = []
+				chunk_metadata = []
+				call_graph = {}
+			# Stub returns empty — always fall back to naive chunking
+			if not chunks:
 				chunks = chunk_text(text=text, chunk_size=chunk_size, overlap=overlap)
 				chunk_metadata = []
 				call_graph = {}
-		elif lowered.endswith((".js", ".ts", ".go")):
+		elif lowered.endswith((".js", ".jsx", ".ts", ".tsx", ".go")):
 			chunks, chunk_metadata = extract_code_chunks(
 				code=text,
 				file_name=file_name,
@@ -171,14 +175,36 @@ async def ingest_document(
 			if not chunks:
 				chunks = chunk_text(text=text, chunk_size=chunk_size, overlap=overlap)
 		else:
+			# .sql, .yml, .yaml, .txt, and any other supported types
 			chunks = chunk_text(text=text, chunk_size=chunk_size, overlap=overlap)
+			chunk_metadata = []
+
+		if not chunks:
+			raise HTTPException(status_code=400, detail="No content could be extracted from the file.")
+
+	except HTTPException:
+		raise
 	except ValueError as exc:
 		raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 	try:
 		embeddings = generate_embeddings(chunks=chunks)
+		if not embeddings:
+			# generate_embeddings returned nothing at all (shouldn't happen for non-empty chunks)
+			raise HTTPException(status_code=500, detail="Embedding generation returned no results.")
+		# Warn if all embeddings are zero-vectors (key missing/invalid) but continue —
+		# the file will be stored with BM25-only retrieval until a valid key is set.
+		if all(all(v == 0.0 for v in emb) for emb in embeddings[:3]):
+			logger.warning(
+				"Storing file '%s' with zero-vector embeddings — GEMINI_API_KEY may be invalid. "
+				"BM25 keyword search will still work for this file.",
+				file_name,
+			)
+	except HTTPException:
+		raise
 	except Exception as exc:
-		raise HTTPException(status_code=500, detail="Failed to generate embeddings") from exc
+		logger.exception("generate_embeddings failed for file %s", file_name)
+		raise HTTPException(status_code=500, detail=f"Failed to generate embeddings: {exc}") from exc
 
 	call_graph_rows_upserted = 0
 	if call_graph:
@@ -198,10 +224,16 @@ async def ingest_document(
 			chunk_metadata=chunk_metadata if chunk_metadata else None,
 		)
 	except Exception as exc:
-		raise HTTPException(status_code=500, detail="Failed to store vectors") from exc
+		raise HTTPException(status_code=500, detail=f"Failed to store vectors: {str(exc)}") from exc
 
 	set_uploaded_file(file_name)
 	set_repo_indexed(False)
+
+	# Safely get embedding dimension (may fail if Gemini is unreachable)
+	try:
+		emb_dim = len(embeddings[0]) if embeddings else embedding_dimension()
+	except Exception:
+		emb_dim = len(embeddings[0]) if embeddings else 768
 
 	return {
 		"filename": file_name,
@@ -209,18 +241,15 @@ async def ingest_document(
 		"chunk_size": chunk_size,
 		"overlap": overlap,
 		"chunk_count": len(chunks),
-		"chunks": chunks,
 		"chunk_metadata": chunk_metadata,
 		"call_graph": call_graph,
 		"embedding_model": DEFAULT_EMBEDDING_MODEL,
-		"embedding_dimension": embedding_dimension(),
+		"embedding_dimension": emb_dim,
 		"embedding_count": len(embeddings),
-		"embeddings": embeddings,
 		"collection": COLLECTION_NAME,
 		"stored_count": len(point_ids),
 		"point_ids": point_ids,
 		"call_graph_rows_upserted": call_graph_rows_upserted,
-		"text": text,
 	}
 
 
@@ -318,15 +347,19 @@ def api_health_check() -> dict[str, object]:
 	"""Return status of Qdrant, Postgres, and the configured LLM provider."""
 	from app.services.vector_store import get_qdrant_client
 
+	qdrant_error = ""
 	qdrant_ok = False
 	try:
 		client = get_qdrant_client()
 		qdrant_ok = client.get_collections() is not None
-	except Exception:
+	except Exception as e:
+		qdrant_error = str(e)
 		qdrant_ok = False
 
 	postgres_ok = False
 	try:
+		from dotenv import load_dotenv
+		load_dotenv(override=True)
 		import psycopg2
 		conn = psycopg2.connect(os.getenv("POSTGRES_DSN", ""), connect_timeout=3)
 		conn.close()
@@ -340,6 +373,7 @@ def api_health_check() -> dict[str, object]:
 
 	return {
 		"qdrant": qdrant_ok,
+		"qdrant_error": qdrant_error,
 		"postgres": postgres_ok,
 		"llm_provider": provider,
 		"gemini_configured": gemini_configured,
@@ -473,25 +507,39 @@ async def query_rag_stream(payload: QueryRequest):
 			try:
 				from google import genai as _genai
 				_gclient = _genai.Client(api_key=gemini_key)
-				model_name = os.getenv("GEMINI_CHAT_MODEL", "gemini-2.0-flash")
+				env_model = os.getenv("GEMINI_CHAT_MODEL", "").strip()
+				candidate_models = [env_model] if env_model else ["gemini-1.5-flash", "gemini-2.5-flash", "gemini-1.5-pro"]
+				if "gemini-1.5-flash" not in candidate_models:
+					candidate_models.append("gemini-1.5-flash")
+
 				user_prompt = (
-					"You are a code assistant.\n"
-					"Use the provided context to answer the question.\n\n"
+					"You are an expert code intelligence assistant.\n"
+					"Use the provided codebase context to answer the question thoroughly.\n\n"
 					f"Context:\n{context}\n\n"
 					f"Question:\n{payload.query}\n\n"
-					"Answer clearly and concisely."
+					"Answer clearly, accurately, and concisely."
 				)
-				for chunk_resp in _gclient.models.generate_content_stream(
-					model=model_name, contents=user_prompt
-				):
-					token = ""
-					if hasattr(chunk_resp, "text") and chunk_resp.text:
-						token = chunk_resp.text
-					if token:
-						yield f"data: {_json.dumps({'type': 'token', 'data': token})}\n\n"
-				latency_ms = round((time.perf_counter() - t0) * 1000, 1)
-				yield f"data: {_json.dumps({'type': 'done', 'query_type': query_type, 'latency_ms': latency_ms})}\n\n"
-				return
+
+				streamed_any = False
+				for model_name in candidate_models:
+					if not model_name:
+						continue
+					try:
+						for chunk_resp in _gclient.models.generate_content_stream(
+							model=model_name, contents=user_prompt
+						):
+							token = ""
+							if hasattr(chunk_resp, "text") and chunk_resp.text:
+								token = chunk_resp.text
+							if token:
+								streamed_any = True
+								yield f"data: {_json.dumps({'type': 'token', 'data': token})}\n\n"
+						if streamed_any:
+							latency_ms = round((time.perf_counter() - t0) * 1000, 1)
+							yield f"data: {_json.dumps({'type': 'done', 'query_type': query_type, 'latency_ms': latency_ms})}\n\n"
+							return
+					except Exception as exc:
+						logger.warning("Gemini streaming model %s failed: %s", model_name, exc)
 			except Exception as exc:
 				logger.warning("Gemini streaming failed: %s — falling back to non-streaming", exc)
 
