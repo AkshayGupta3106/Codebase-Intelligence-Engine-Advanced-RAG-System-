@@ -14,6 +14,7 @@ from fastapi import HTTPException
 from fastapi import Query
 from fastapi import UploadFile
 from fastapi.responses import StreamingResponse
+from qdrant_client.models import Filter, FieldCondition, MatchValue
 
 from app.services.chunking import chunk_text
 from app.services.embeddings import DEFAULT_EMBEDDING_MODEL
@@ -40,6 +41,28 @@ UPLOAD_DIR = Path("data/uploads")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 SUPPORTED_REPO_EXTENSIONS = {".py", ".js", ".ts", ".jsx", ".tsx", ".go", ".sql", ".yml", ".yaml"}
 SKIPPED_REPO_DIRECTORIES = {".git", "node_modules", "pycache", "__pycache__", "dist", "build", ".next", ".venv", "target", "dbt_packages"}
+from pydantic import BaseModel
+
+class ProfileChunkRequest(BaseModel):
+	chunks: list[str]
+	metadata: list[dict]
+
+@router.post("/ingest_profile")
+async def ingest_profile(req: ProfileChunkRequest):
+	from app.services.vector_store import store_chunk_embeddings
+	from app.services.embeddings import generate_embeddings
+	try:
+		embeddings = generate_embeddings(req.chunks)
+		store_chunk_embeddings(
+			chunks=req.chunks,
+			embeddings=embeddings,
+			chunk_metadata=req.metadata,
+			file_name="knowledge_base.md"
+		)
+		return {"status": "success"}
+	except Exception as e:
+		raise HTTPException(status_code=500, detail=str(e))
+
 MAX_FILES = 100
 MAX_FILE_CHARACTERS = 200000
 
