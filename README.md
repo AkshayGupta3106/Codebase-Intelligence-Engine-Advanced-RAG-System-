@@ -225,7 +225,8 @@ Intent Classification
     ├── explain
     ├── search
     ├── flow
-    └── find_usage
+    ├── find_usage
+    └── impact_analysis
 ```
 
 ## Search / Explain Path
@@ -252,17 +253,17 @@ Heuristic Filtering
 Context Builder
           │
           ▼
-Large Language Model
+Large Language Model (SSE Stream / JSON)
           │
           ▼
-Final Answer
+Final Answer / Streamed Tokens
 ```
 
 ------------------------------------------------------------------------
 
 # 🎯 Intent-Based Routing
 
-The system classifies user questions into four execution paths.
+The system classifies user questions into execution paths.
 
 ### `explain`
 
@@ -292,6 +293,14 @@ Example:
 > "Which functions call `authenticate_user()`?"
 
 This avoids unnecessary vector retrieval.
+
+### `impact_analysis`
+
+Traverses dependency graphs (call graph and dbt SQL model lineage) to analyze blast radius.
+
+Example:
+
+> "What breaks if I modify `stg_orders` or `authenticate_user()`?"
 
 ### `flow`
 
@@ -644,6 +653,35 @@ npm run dev
 
 The Vite development server will provide the local frontend URL.
 
+## Ingesting / Indexing a Repository
+
+To index a local codebase into PostgreSQL & Qdrant:
+
+``` bash
+python scripts/ingest_repo_local.py <path_to_repo>
+```
+
+Or index via GitHub URL POST request:
+
+``` bash
+curl -X POST http://localhost:8000/api/index_repo \
+  -H "Content-Type: application/json" \
+  -d '{"repo_url": "https://github.com/dbt-labs/jaffle_shop"}'
+```
+
+------------------------------------------------------------------------
+
+# 🔌 API Reference
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/query` | `POST` | Standard RAG query endpoint returning full answer, sources, & call graph |
+| `/api/query/stream` | `POST` | **SSE Streaming** endpoint yielding real-time tokens (`text/event-stream`) |
+| `/api/index_repo` | `POST` | Clones and indexes a public GitHub repository |
+| `/api/ingest` | `POST` | Uploads and indexes a local source file (`.py`, `.js`, `.ts`, `.sql`, etc.) |
+| `/api/search` | `GET` | Vector search debugger endpoint |
+| `/api/health` | `GET` | System health check (PostgreSQL, Qdrant, & LLM status) |
+
 ------------------------------------------------------------------------
 
 
@@ -844,31 +882,5 @@ This project demonstrates:
 -   **AWS S3 and CloudFront deployment**
 -   **Secure private S3 origin using CloudFront Origin Access Control**
 
-------------------------------------------------------------------------
-
-# 📌 Resume Description
-
-> **Codebase Intelligence Engine --- Advanced Retrieval-Augmented
-> Generation System**\
-> Built a production-grade code intelligence platform using AST-aware
-> parsing, deterministic PostgreSQL call graphs, hybrid semantic and
-> BM25 retrieval, Reciprocal Rank Fusion, cross-encoder reranking, and
-> intent-aware query routing. Implemented an in-memory LRU cache over
-> the Gemini embedding and Qdrant search hot paths, reducing retrieval
-> p95 latency from 808.7 ms to 291.6 ms (2.77× speedup) across a
-> 100-query eval set. Deployed the React frontend using Amazon S3 and
-> CloudFront and the FastAPI backend on Render, with Neon PostgreSQL
-> and Qdrant Cloud for production data services. Achieved 92% File
-> Hit Rate@3 with 0.91 faithfulness.
-
-------------------------------------------------------------------------
-
-# 📜 License
-
-Add your preferred license here, for example:
-
-``` text
-MIT License
-```
 
 if you intend to release the project under the MIT License.
