@@ -31,3 +31,6 @@ frontend/build/
 
 venv/
 .venv/
+# Ignore custom knowledge files
+system_knowledge.jsonl
+scripts/ingest_jsonl.py
