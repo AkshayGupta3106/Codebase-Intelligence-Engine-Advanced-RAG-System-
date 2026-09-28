@@ -1,572 +1,186 @@
-# 🚀 Codebase Intelligence Engine
+# 🧠 Codebase Intelligence Engine
 
-> **Advanced Retrieval-Augmented Generation system for understanding and
-> querying real-world codebases.**
+### AI Code & SQL Lineage Engine: ask your codebase anything, get grounded answers with sources.
 
-The **Codebase Intelligence Engine** is a production-style AI system
-that transforms a raw software repository into structured, queryable
-intelligence.
+![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
+![React](https://img.shields.io/badge/React-Vite-61DAFB?logo=react&logoColor=black)
+![Qdrant](https://img.shields.io/badge/Qdrant-Vector%20DB-DC244C)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169E1?logo=postgresql&logoColor=white)
+![AWS](https://img.shields.io/badge/AWS-S3%20%2B%20CloudFront-FF9900?logo=amazonaws&logoColor=white)
+![Render](https://img.shields.io/badge/Backend-Render-46E3B7)
 
-Instead of treating source code as ordinary text, the system understands
-**functions, classes, dependencies, caller-callee relationships,
-semantic meaning, and lexical matches**. It combines structural parsing,
-graph reasoning, hybrid retrieval, reranking, and large language model
-generation to answer questions about complex codebases.
+An **AST-aware RAG system** that combines hybrid retrieval with **deterministic program analysis**. It answers semantic questions with retrieval and LLMs, and answers structural questions ("who calls this?", "what breaks if I change this table?") by traversing a real call and lineage graph, so there is nothing to hallucinate.
 
-## 🌐 Live Demo
+**🔗 Live Demo**
 
-**Frontend:**\
-https://d244q4kb3edykh.cloudfront.net/
+| | Link |
+|---|---|
+| 🌐 Frontend | https://d244q4kb3edykh.cloudfront.net/ |
+| ⚡ Backend API | https://codebase-intelligence-engine-advanced.onrender.com/ |
+| 📖 API Docs (Swagger) | https://codebase-intelligence-engine-advanced.onrender.com/docs |
 
-**Backend API:**\
-https://codebase-intelligence-engine-advanced.onrender.com/
+> The backend runs on a free tier, so the first request after idle time may take a few seconds to wake up.
 
-**API Documentation:**\
-https://codebase-intelligence-engine-advanced.onrender.com/docs
+---
 
-------------------------------------------------------------------------
+## 📑 Table of Contents
 
-# 🧠 Problem
+- [Why this exists](#-why-this-exists)
+- [Key features](#-key-features)
+- [How it works](#-how-it-works)
+- [Benchmarks](#-benchmarks)
+- [Tech stack](#-tech-stack)
+- [Quick start](#-quick-start)
+- [API reference](#-api-reference)
+- [Deployment](#-deployment)
+- [Project structure](#-project-structure)
+- [Limitations & roadmap](#-limitations--roadmap)
+- [Author](#-author)
 
-Traditional Retrieval-Augmented Generation systems often treat source
-code as plain text.
+---
 
-This causes several problems:
+## 💡 Why this exists
 
--   Function and class boundaries can be destroyed by naive chunking.
--   Caller-callee relationships are lost.
--   Configuration files can pollute retrieval results.
--   Semantic search alone can miss exact code references.
--   Large codebases become difficult to reason about.
--   Large language models may hallucinate execution flows when the
-    underlying relationships are not deterministic.
+Most "chat with your code" tools treat source code as plain text. That breaks in predictable ways:
 
-For example, questions such as:
+| Problem with naive RAG | What this project does |
+|---|---|
+| Fixed-size chunks cut functions in half | **AST-aware chunking** at function, class and method boundaries |
+| Vector search misses exact identifiers like `authenticate_user` | **Hybrid retrieval**: vectors plus BM25 lexical search |
+| Caller-callee relationships are lost | **Deterministic call graph** stored in PostgreSQL |
+| LLMs invent execution flows | **Graph traversal** answers structural questions directly |
+| Config files pollute the results | **Heuristic filtering** prioritizes real application logic |
+| Data teams can't trace SQL dependencies | **SQL/dbt lineage parser** with impact analysis |
 
-> "What is the execution flow of this feature?"
+---
 
-> "Which modules depend on this function?"
+## ✨ Key Features
 
-> "Explain the core backend logic without considering configuration
-> files."
+- 🌳 **AST-aware parsing** with Tree-sitter for Python, JavaScript, TypeScript and Go
+- 🔎 **Hybrid retrieval**: Qdrant semantic search plus BM25, fused with **Reciprocal Rank Fusion**
+- 🎯 **Cross-encoder reranking** and heuristic quality filtering
+- 🧭 **Intent-based routing**: `explain`, `search`, `find_usage`, `impact_analysis`, `flow`
+- 🕸️ **Deterministic call graph** in PostgreSQL, traversed with NetworkX
+- 🗄️ **SQL / dbt lineage**: table-level lineage and impact analysis across models
+- 🌊 **Streaming answers** over Server-Sent Events (SSE)
+- ⚡ **LRU caching** on embedding and vector-search calls
+- 📊 **Built-in evaluation suite** (retrieval metrics, Ragas, latency and lineage benchmarks)
+- ☁️ **Production deployment**: private S3 origin behind CloudFront (OAC) plus FastAPI on Render
 
-require more than simple vector similarity.
+---
 
-------------------------------------------------------------------------
+## 🔄 How it works
 
-# 💡 Solution
+### Indexing
 
-The Codebase Intelligence Engine combines:
-
-1.  **AST-aware code parsing**
-2.  **Deterministic call-graph construction**
-3.  **Semantic vector search**
-4.  **BM25 lexical search**
-5.  **Reciprocal Rank Fusion**
-6.  **Cross-encoder reranking**
-7.  **Heuristic quality filtering**
-8.  **Large language model intent classification**
-9.  **Graph-based reasoning**
-10. **Large language model answer generation**
-
-This creates a hybrid architecture that combines the strengths of both
-**retrieval** and **deterministic program analysis**.
-
-------------------------------------------------------------------------
-
-# 🏗️ System Architecture
-
-``` text
-                         ┌──────────────────────┐
-                         │       User           │
-                         └──────────┬───────────┘
-                                    │
-                                    ▼
-                         ┌──────────────────────┐
-                         │ React + Vite         │
-                         │ Frontend             │
-                         └──────────┬───────────┘
-                                    │ HTTPS
-                                    ▼
-                         ┌──────────────────────┐
-                         │ AWS CloudFront       │
-                         │ CDN + HTTPS          │
-                         └──────────┬───────────┘
-                                    │
-                                    ▼
-                         ┌──────────────────────┐
-                         │ Amazon S3            │
-                         │ Static Frontend      │
-                         └──────────────────────┘
-
-
-                         API Requests
-                              │
-                              ▼
-                    ┌──────────────────────┐
-                    │ Render               │
-                    │ FastAPI Backend      │
-                    └──────────┬───────────┘
-                               │
-              ┌────────────────┼────────────────┐
-              │                │                │
-              ▼                ▼                ▼
-       ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
-       │ Neon        │  │ Qdrant      │  │ Groq /      │
-       │ PostgreSQL  │  │ Cloud       │  │ Gemini      │
-       │ Call Graph  │  │ Vector DB   │  │ LLM         │
-       └─────────────┘  └─────────────┘  └─────────────┘
+```
+Repository → AST parsing (functions / classes / methods / line ranges)
+          → Structural chunking
+          → Embeddings → Qdrant (vectors)
+          → Caller-callee edges → PostgreSQL (call graph)
 ```
 
-------------------------------------------------------------------------
+Each chunk keeps its **file path, symbol name, start and end line, source, docstring and structural metadata**, which is what powers exact citations in answers.
 
-# 🔄 Codebase Indexing Pipeline
+### Querying
 
-When a repository is indexed:
+Every question is first classified by intent, then routed to the right engine:
 
-``` text
-Raw Codebase
-     │
-     ▼
-AST Parsing
-     │
-     ├── Functions
-     ├── Classes
-     ├── Methods
-     └── Line Boundaries
-     │
-     ▼
-Structural Chunking
-     │
-     ▼
-Embedding Generation
-     │
-     ├───────────────┐
-     ▼               ▼
-Qdrant          PostgreSQL
-Vectors         Call Graph
-     │               │
-     └───────┬───────┘
-             ▼
-       Queryable Codebase
+| Intent | Example | Engine |
+|---|---|---|
+| `search` | "Where is `/api/login` handled?" | Hybrid retrieval (lexical-friendly) |
+| `explain` | "Explain the core backend logic" | Hybrid retrieval + rerank + LLM |
+| `find_usage` | "Which functions call `authenticate_user()`?" | **PostgreSQL call graph** (no vector search) |
+| `flow` | "Show the flow from API endpoint to database" | **Graph traversal** |
+| `impact_analysis` | "What breaks if I change `stg_orders`?" | **Call graph + dbt lineage traversal** |
+
+### Retrieval pipeline (search / explain)
+
+```
+Query → Semantic search (Qdrant) + BM25 → Reciprocal Rank Fusion
+      → Cross-encoder reranking → Heuristic filtering
+      → Context builder → LLM (SSE stream or JSON) → Answer + sources
 ```
 
-## AST-Aware Parsing
+**Why RRF?** BM25 scores and vector similarities live on different scales. RRF fuses by *rank* (`score = Σ 1 / (k + rank)`), so no score normalization is needed.
 
-The engine supports structural parsing for:
+**Why heuristic filtering?** Application code (`*.py`, `*.go`, `*.ts`) is boosted and noise like `package-lock.json`, other `*.json` files and `tailwind.config.*` is down-weighted, which keeps config files from crowding out real logic.
 
--   Python
--   JavaScript
--   TypeScript
--   Go
+---
 
-Instead of splitting code into arbitrary character windows, the system
-attempts to preserve meaningful program structures such as functions and
-classes.
+## 📊 Benchmarks
 
-Each structural chunk retains information such as:
+All benchmark scripts live in [`eval/`](./eval).
 
--   File path
--   Function or class name
--   Start line
--   End line
--   Source code
--   Documentation
--   Structural metadata
+### Retrieval and answer quality
 
-------------------------------------------------------------------------
+| Metric | Score | What it measures |
+|---|---|---|
+| **File Hit Rate @3** | **92%** | Correct source file appears in the top 3 Qdrant vector results |
+| **Faithfulness** (Ragas) | **0.91** | Answer claims are grounded in the retrieved context |
+| **Answer Relevancy** (Ragas) | **0.88** | Answer directly addresses the question |
+| **Context Precision** (Ragas) | **0.87** | Most relevant chunks are ranked highest |
 
-# 🕸️ Deterministic Call Graph
+Scripts: `eval/evaluate_rag.py`, `eval/evaluate_ragas.py`, `eval/benchmark_reranker.py`
 
-The system extracts caller-callee relationships and stores them in
-PostgreSQL.
+### SQL parsing and lineage
 
-Example:
+| Metric | Result |
+|---|---|
+| Models parsed | 5 dbt models |
+| Parse success rate | **100%** |
+| Mean parse time | **2.9 ms / model** |
+| Table-level lineage | **Precision 1.00 · Recall 1.00 · 0 spurious edges** |
+| Column-level lineage | Precision 1.00 · Recall 0.33 · 0 spurious edges |
 
-``` text
-main()
-  │
-  ▼
-process_request()
-  │
-  ├── validate_input()
-  │
-  └── retrieve_context()
-          │
-          ▼
-       generate_answer()
+Scripts: `eval/benchmark_sql_parsing.py`, `eval/benchmark_lineage_table.py`, `eval/benchmark_lineage_column.py`
+
+### Latency: LRU cache
+
+An in-memory LRU cache sits on the two slowest calls, the **Gemini embedding API** and the **Qdrant vector search**. Benchmarked on a 100-query set (50% cache hit rate, because the set includes repeated queries):
+
+| Metric | No cache | Cached | Speedup |
+|---|---|---|---|
+| Mean | 516.2 ms | 187.8 ms | **2.75×** |
+| p50 | 467.7 ms | 169.5 ms | **2.76×** |
+| **p95** | **808.7 ms** | **291.6 ms** | **2.77×** |
+| p99 | 1167.9 ms | 457.9 ms | **2.55×** |
+
+Script: `eval/benchmark_cache.py`. The gain comes from skipping two network round-trips on repeated queries, so real-world speedup depends on how often queries repeat.
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technologies |
+|---|---|
+| **Backend** | Python, FastAPI, Uvicorn, Pydantic, Psycopg2 |
+| **Code analysis** | Tree-sitter, NetworkX |
+| **Retrieval** | Qdrant, BM25, Reciprocal Rank Fusion, cross-encoder reranking |
+| **LLM / embeddings** | Gemini (embeddings), Groq / Gemini (generation) via OpenAI-compatible client |
+| **Frontend** | React, Vite, Tailwind CSS |
+| **Databases** | PostgreSQL (Neon), Qdrant Cloud |
+| **Infra** | AWS S3, CloudFront (Origin Access Control), Render |
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+Python 3.10+, Node.js and npm, PostgreSQL, a Qdrant instance (cloud or local), and an LLM API key.
+
+### 1. Clone and configure
+
+```bash
+git clone https://github.com/AkshayGupta3106/Codebase-Intelligence-Engine-Advanced-RAG-System-.git
+cd Codebase-Intelligence-Engine-Advanced-RAG-System-
 ```
 
-This enables deterministic queries such as:
+Create a `.env` file (never commit it):
 
--   Which functions call this function?
--   Which modules depend on this function?
--   What is the execution flow?
--   What functions are downstream from this function?
-
-For these queries, the system does **not rely solely on semantic
-similarity**.
-
-Instead, it directly traverses the stored graph.
-
-------------------------------------------------------------------------
-
-# 🔎 Hybrid Retrieval Pipeline
-
-For semantic search and explanation queries, the system uses multiple
-retrieval signals.
-
-``` text
-User Query
-    │
-    ▼
-Intent Classification
-    │
-    ├── explain
-    ├── search
-    ├── flow
-    ├── find_usage
-    └── impact_analysis
-```
-
-## Search / Explain Path
-
-``` text
-Query
-  │
-  ├───────────────┐
-  ▼               ▼
-Semantic Search   BM25
-(Qdrant)          (Lexical)
-  │               │
-  └───────┬───────┘
-          ▼
-Reciprocal Rank Fusion
-          │
-          ▼
-Cross-Encoder Reranking
-          │
-          ▼
-Heuristic Filtering
-          │
-          ▼
-Context Builder
-          │
-          ▼
-Large Language Model (SSE Stream / JSON)
-          │
-          ▼
-Final Answer / Streamed Tokens
-```
-
-------------------------------------------------------------------------
-
-# 🎯 Intent-Based Routing
-
-The system classifies user questions into execution paths.
-
-### `explain`
-
-Used for deeper explanations of code.
-
-The system prioritizes meaningful backend and application logic while
-suppressing low-value configuration files.
-
-### `search`
-
-Used for fast and exact code lookup.
-
-Lexical matching is especially useful when the query contains:
-
--   Function names
--   Class names
--   File names
--   API routes
--   Variable names
-
-### `find_usage`
-
-Uses the PostgreSQL call graph directly.
-
-Example:
-
-> "Which functions call `authenticate_user()`?"
-
-This avoids unnecessary vector retrieval.
-
-### `impact_analysis`
-
-Traverses dependency graphs (call graph and dbt SQL model lineage) to analyze blast radius.
-
-Example:
-
-> "What breaks if I modify `stg_orders` or `authenticate_user()`?"
-
-### `flow`
-
-Uses graph traversal to determine execution sequences.
-
-Example:
-
-> "Show me the execution flow from the API endpoint to the database."
-
-------------------------------------------------------------------------
-
-# 🧮 Retrieval Techniques
-
-## Semantic Search
-
-Code chunks are represented as vectors and stored in Qdrant.
-
-This allows conceptually similar queries to retrieve relevant code even
-when the exact words do not match.
-
-## BM25
-
-Lexical retrieval helps with exact identifiers and terminology.
-
-For example:
-
-``` text
-authenticate_user
-DatabaseConnection
-/api/login
-```
-
-can be difficult for pure semantic retrieval but are excellent lexical
-search candidates.
-
-## Reciprocal Rank Fusion
-
-The semantic and lexical rankings are combined using Reciprocal Rank
-Fusion.
-
-This gives the system both:
-
--   semantic understanding
--   exact keyword matching
-
-## Cross-Encoder Reranking
-
-The initial candidate set is further refined using a cross-encoder
-reranker.
-
-This improves the ordering of the most relevant code chunks before they
-are passed to the language model.
-
-## Heuristic Filtering
-
-The engine assigns higher priority to application logic and reduces the
-influence of low-value configuration files.
-
-Examples of files that can receive lower priority include:
-
-``` text
-*.json
-tailwind.config.*
-package-lock.json
-```
-
-while backend logic such as:
-
-``` text
-*.py
-*.go
-*.ts
-```
-
-can receive higher priority.
-
-------------------------------------------------------------------------
-
-# 🤖 Large Language Model Layer
-
-The system uses an external large language model provider for:
-
--   Intent classification
--   Context interpretation
--   Final answer generation
-
-The architecture is designed around API-based inference so that the
-backend does not need to host a large language model itself.
-
-Environment configuration determines the active provider.
-
-------------------------------------------------------------------------
-
-# 🛠️ Technology Stack
-
-## Backend
-
--   Python
--   FastAPI
--   Uvicorn
--   PostgreSQL
--   Qdrant
--   Tree-sitter
--   NetworkX
--   Python dotenv
--   Psycopg2
--   Google GenAI / OpenAI-compatible client
-
-## Frontend
-
--   React
--   Vite
--   Tailwind CSS
-
-## Retrieval
-
--   Vector search
--   BM25 lexical retrieval
--   Reciprocal Rank Fusion
--   Cross-encoder reranking
--   Heuristic reranking
-
-## Infrastructure
-
--   GitHub
--   Render
--   Neon PostgreSQL
--   Qdrant Cloud
--   Amazon S3
--   Amazon CloudFront
-
-------------------------------------------------------------------------
-
-# ☁️ Deployment Architecture
-
-The project was deployed using a low-cost, production-style
-architecture.
-
-## Frontend Deployment
-
-The React application is built using Vite:
-
-``` bash
-npm run build
-```
-
-This generates:
-
-``` text
-frontend/dist/
-```
-
-The generated static files are uploaded to:
-
-``` text
-Amazon S3
-```
-
-CloudFront is then configured as the CDN in front of the S3 bucket.
-
-The S3 bucket remains private and CloudFront accesses it using **Origin
-Access Control**.
-
-``` text
-React
-  ↓
-Vite build
-  ↓
-dist/
-  ↓
-Amazon S3
-  ↓
-CloudFront
-  ↓
-HTTPS
-```
-
-### CloudFront Configuration
-
-Important configuration used:
-
-``` text
-Origin:
-Amazon S3
-
-Origin Path:
-/dist
-
-Origin Access:
-Origin Access Control
-
-Default Root Object:
-index.html
-
-WAF:
-Disabled
-```
-
-The CloudFront distribution provides the public frontend URL.
-
-------------------------------------------------------------------------
-
-# ⚡ Backend Deployment
-
-The FastAPI backend is deployed on Render.
-
-The application is started using:
-
-``` bash
-uvicorn app.main:app --host 0.0.0.0 --port $PORT
-```
-
-Production environment variables are configured directly in Render
-rather than committing secrets to GitHub.
-
-The backend exposes the FastAPI API and Swagger documentation.
-
-------------------------------------------------------------------------
-
-# 🐘 PostgreSQL Deployment
-
-During development, PostgreSQL runs locally:
-
-``` text
-localhost:5432
-```
-
-For production, the project uses:
-
-``` text
-Neon PostgreSQL
-```
-
-The backend receives the production database connection through:
-
-``` env
-POSTGRES_DSN=<neon-connection-string>
-```
-
-PostgreSQL is primarily used for the structured call graph and
-relational application data.
-
-------------------------------------------------------------------------
-
-# 🔍 Qdrant Deployment
-
-Qdrant is used as the vector database.
-
-The production backend connects using:
-
-``` env
-QDRANT_URL=<qdrant-url>
-QDRANT_API_KEY=<qdrant-api-key>
-```
-
-The vector database stores embeddings generated from code chunks.
-
-------------------------------------------------------------------------
-
-# 🔐 Environment Variables
-
-Create a `.env` file locally.
-
-Example:
-
-``` env
+```env
 POSTGRES_DSN=postgresql://postgres:password@localhost:5432/ragdb
 
 QDRANT_URL=https://your-qdrant-instance
@@ -578,309 +192,119 @@ GROQ_MODEL=llama-3.3-70b-versatile
 GEMINI_API_KEY=your-gemini-api-key
 ```
 
-### Security
+### 2. Run the backend
 
-Never commit `.env` to GitHub.
-
-Add:
-
-``` gitignore
-.env
-.venv/
-__pycache__/
-```
-
-Production secrets are configured through Render environment variables.
-
-------------------------------------------------------------------------
-
-# 🖥️ Local Development
-
-## Requirements
-
--   Python 3.10+
--   Node.js
--   npm
--   PostgreSQL
--   Qdrant account or local Qdrant instance
--   Large language model API key
-
-## Backend
-
-Create a virtual environment:
-
-``` bash
+```bash
 python -m venv .venv
-```
+.venv\Scripts\activate          # Windows
+# source .venv/bin/activate     # macOS / Linux
 
-Activate it on Windows:
-
-``` powershell
-.venv\Scripts\activate
-```
-
-Install dependencies:
-
-``` bash
 pip install -r requirements.txt
-```
-
-Start FastAPI:
-
-``` bash
 uvicorn app.main:app --reload --port 8000
 ```
 
-Backend:
+API: `http://localhost:8000` · Swagger: `http://localhost:8000/docs`
 
-``` text
-http://localhost:8000
-```
+### 3. Run the frontend
 
-Swagger:
-
-``` text
-http://localhost:8000/docs
-```
-
-## Frontend
-
-``` bash
+```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-The Vite development server will provide the local frontend URL.
+### 4. Index a repository
 
-## Ingesting / Indexing a Repository
-
-To index a local codebase into PostgreSQL & Qdrant:
-
-``` bash
+```bash
+# Local codebase
 python scripts/ingest_repo_local.py <path_to_repo>
-```
 
-Or index via GitHub URL POST request:
-
-``` bash
+# Or any public GitHub repo (try a dbt project for SQL lineage)
 curl -X POST http://localhost:8000/api/index_repo \
   -H "Content-Type: application/json" \
   -d '{"repo_url": "https://github.com/dbt-labs/jaffle_shop"}'
 ```
 
-------------------------------------------------------------------------
+Then ask questions such as:
 
-# 🔌 API Reference
+- *"Which functions call `authenticate_user()`?"*
+- *"What breaks if I modify `stg_orders`?"*
+- *"Explain the core backend logic, ignoring config files."*
+
+---
+
+## 🔌 API Reference
 
 | Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/query` | `POST` | Standard RAG query endpoint returning full answer, sources, & call graph |
-| `/api/query/stream` | `POST` | **SSE Streaming** endpoint yielding real-time tokens (`text/event-stream`) |
+|---|---|---|
+| `/api/query` | `POST` | Standard RAG query: returns the full answer, sources and call graph |
+| `/api/query/stream` | `POST` | **SSE streaming** endpoint (`text/event-stream`) that yields tokens in real time |
 | `/api/index_repo` | `POST` | Clones and indexes a public GitHub repository |
 | `/api/ingest` | `POST` | Uploads and indexes a local source file (`.py`, `.js`, `.ts`, `.sql`, etc.) |
-| `/api/search` | `GET` | Vector search debugger endpoint |
-| `/api/health` | `GET` | System health check (PostgreSQL, Qdrant, & LLM status) |
+| `/api/search` | `GET` | Vector search debugger |
+| `/api/health` | `GET` | Health check for PostgreSQL, Qdrant and the LLM |
 
-------------------------------------------------------------------------
+---
 
+## ☁️ Deployment
 
+| Component | Where | Notes |
+|---|---|---|
+| Frontend | **Amazon S3 + CloudFront** | Vite build (`dist/`), S3 bucket stays **private**, CloudFront reads it via **Origin Access Control** |
+| Backend | **Render** | `uvicorn app.main:app --host 0.0.0.0 --port $PORT`; secrets are Render environment variables |
+| Relational DB | **Neon PostgreSQL** | Call graph and relational data |
+| Vector DB | **Qdrant Cloud** | Code chunk embeddings |
 
-# ⚡ Cache Performance Benchmark
+Secrets are never committed. Add `.env`, `.venv/` and `__pycache__/` to `.gitignore`.
 
-An in-memory LRU cache was benchmarked on top of the two hottest
-paths — **Gemini embedding API** and **Qdrant vector search** — using
-the full 100-query eval set.
+---
 
-**Benchmark method:** `eval/benchmark_cache.py` runs two passes over
-100 queries. The baseline pass has no cache. The cached pass first
-warms the cache, then re-times every query with the cache active.
+## 📁 Project Structure
 
-``` text
-Baseline path (per query):
-  User Query
-    └── generate_embeddings()   ← Gemini API round-trip
-          └── search_similar_chunks()  ← Qdrant network call
-                └── BM25 + RRF + heuristic reranking
-
-Cached path (per query, warm cache):
-  User Query
-    └── _EMBED_CACHE lookup (sha-256 key)  ← ~0 ms
-          └── _SEARCH_CACHE lookup         ← ~0 ms
-                └── BM25 + RRF + heuristic reranking
 ```
-
-## Results — 100 Queries
-
-| Metric | Baseline (no cache) | Cached (warm) | Speedup |
-|--------|--------------------:|---------------:|--------:|
-| Mean   | 516.2 ms | 187.8 ms | **2.75×** |
-| p50    | 467.7 ms | 169.5 ms | **2.76×** |
-| p95    | 808.7 ms | 291.6 ms | **2.77×** |
-| p99    | 1167.9 ms | 457.9 ms | **2.55×** |
-| Min    | 337.3 ms | 134.8 ms | — |
-| Max    | 1187.7 ms | 504.1 ms | — |
-
-## Cache Hit Rates (Timed Pass)
-
-| Layer | Hit Rate |
-|-------|----------|
-| Embedding (Gemini API) | 50.0% |
-| Vector Search (Qdrant) | 50.0% |
-
-> **50% hit rate** is achieved because the 100-query set is padded
-> with repeated queries. In a live system with real repeated user
-> queries the hit rate — and thus the speedup — will be higher.
-
-## Key Takeaways
-
-- **p95 latency drops from 808.7 ms → 291.6 ms** — a **2.77×**
-  improvement — by eliminating the Gemini API and Qdrant network
-  round-trips for repeated queries.
-- The cache adds **zero code changes** to the core RAG pipeline;
-  it is a pure monkey-patch of `generate_embeddings` and
-  `search_similar_chunks`.
-- The Gemini embedding call is the dominant bottleneck in the
-  baseline (accounts for ~60-70% of retrieval latency). Caching it
-  directly unlocks the largest speedup.
-- Even at 50% hit rate the speedup is consistent across all
-  percentiles, confirming the benefit is not skewed by outliers.
-
-------------------------------------------------------------------------
-
-# 🧪 Evaluation & Benchmarks Overview
-
-All of the benchmark tests are located inside the `eval/` directory. Here is a breakdown of what each benchmark does and where to find them:
-
-### Data Engineering / SQL Lineage Benchmarks
-These tests evaluate how well the intelligence engine can parse raw SQL dialects and map out dependencies compared to dbt's native compiler.
-
-#### 1. SQL Parser Performance (`eval/benchmark_sql_parsing.py`)
-| Metric | Result |
-|--------|--------|
-| Total Models Parsed | 5 |
-| Parse Success Rate | **100.0%** |
-| Mean Parse Time | **2.9 ms / model** |
-
-#### 2. Lineage Accuracy (`eval/benchmark_lineage_table.py` & `column.py`)
-| Metric | Precision | Recall | Spurious (FP) |
-|--------|-----------|--------|---------------|
-| Table-Level Lineage | **100%** (1.000) | **100%** (1.000) | 0.0% |
-| Column-Level Lineage| **100%** (1.000) | 33.3% (0.333) | 0.0% |
-
-### RAG Retrieval & Answer Quality Benchmarks
-* **`eval/benchmark_reranker.py`**: Evaluates the effectiveness of the cross-encoder heuristic reranking (making sure the most relevant code chunks appear at the top).
-* **`eval/evaluate_rag.py`** & **`eval/evaluate_ragas.py`**: Evaluates the end-to-end quality of the generated AI responses using the `ragas` framework against a "Golden" dataset.
-
-#### Qdrant Retrieval & Ragas Generation Quality
-| Metric | Score | Description |
-|--------|-------|-------------|
-| **File Hit Rate @3** | **92%** | Frequency that the correct source file is in the top 3 Qdrant vector results. |
-| **Faithfulness** | **0.91** | (Ragas) Measures if the generated answer is factually rooted in the retrieved context. |
-| **Answer Relevancy** | **0.88** | (Ragas) Measures how directly the generated answer addresses the user's question. |
-| **Context Precision** | **0.87** | (Ragas) Measures whether the most relevant Qdrant chunks were ranked highest. |
-
-### Performance & Latency Benchmarks
-* **`eval/benchmark_cache.py`**: Measures the retrieval speedup (latency) using our LRU caching layers vs a cold start.
-
-**Results (100-Query Eval Set):**
-
-| Metric | Baseline (no cache) | Cached (warm) | Speedup |
-|--------|--------------------:|---------------:|--------:|
-| Mean   | 554.81 ms | **164.18 ms** | **3.38×** |
-| p50    | 527.40 ms | **159.38 ms** | **3.31×** |
-| p95    | 651.17 ms | **220.03 ms** | **2.96×** |
-| p99    | 729.89 ms | **236.93 ms** | **3.08×** |
-| Min (p0) | 478.18 ms | **118.11 ms** | — |
-| Max (p100)| 1769.92 ms| **273.17 ms** | — |
-
-**Cache Hit Rates:**
-* **Embedding Cache (Gemini API)**: 50.0%
-* **Vector Search Cache (Qdrant)**: 50.0%
-
-> *Generated automatically via `eval/benchmark_report.md`*
-
-------------------------------------------------------------------------
-
-# 📁 Project Structure
-
-``` text
 Codebase-Intelligence-Engine/
-│
-├── app/
-│   ├── ...
+├── app/                  # FastAPI backend (routing, retrieval, graph, LLM layer)
 │   └── main.py
-│
-├── frontend/
-│   ├── src/
-│   ├── public/
-│   ├── package.json
-│   └── ...
-│
-├── eval/
+├── frontend/             # React + Vite + Tailwind UI
+├── eval/                 # Benchmarks and evaluation scripts
 │   ├── evaluate_rag.py
+│   ├── evaluate_ragas.py
+│   ├── benchmark_reranker.py
 │   ├── benchmark_cache.py
-│   ├── benchmark_results.json
-│   ├── benchmark_report.md
-│   └── ...
-│
+│   ├── benchmark_sql_parsing.py
+│   └── benchmark_report.md
+├── scripts/              # Ingestion helpers (ingest_repo_local.py)
 ├── data/
-│   └── ...
-│
 ├── requirements.txt
 ├── .env.example
-├── .gitignore
 └── README.md
 ```
 
-------------------------------------------------------------------------
+---
 
-# 🚀 Deployment Summary
+## 🧭 Limitations & Roadmap
 
-The complete deployment flow was:
+Being upfront about what this does and doesn't do yet:
 
-``` text
-GitHub
-   │
-   ├───────────────────────────────┐
-   │                               │
-   ▼                               ▼
-Frontend                         Backend
-   │                               │
-npm run build                  FastAPI
-   │                               │
-   ▼                               ▼
-Amazon S3                      Render
-   │                               │
-   ▼                       ┌───────┼────────┐
-CloudFront                 │       │        │
-   │                       ▼       ▼        ▼
-   │                     Neon   Qdrant   LLM API
-   │                   PostgreSQL Cloud
-   │
-   ▼
-Live React Application
-```
+- **Static analysis limits.** The call graph can't resolve dynamic dispatch, callbacks or reflection.
+- **Column-level lineage has low recall (0.33).** It's precise but incomplete. Next up: `SELECT *` expansion and CTE alias tracking.
+- **Small benchmark sets.** The SQL benchmarks cover 5 models, so broader dialect coverage is planned.
+- **In-memory cache.** It is per-process. Planned: Redis with TTL and index-version keys.
 
-------------------------------------------------------------------------
+**Roadmap**
 
-# 🎯 Key Engineering Highlights
+- [ ] Ablation study: vector only vs hybrid vs hybrid + rerank
+- [ ] Larger golden dataset for retrieval evaluation
+- [ ] Column-level lineage improvements
+- [ ] Incremental re-indexing on file changes
+- [ ] Authentication and rate limiting on public endpoints
+- [ ] Code-specific embedding model comparison
 
-This project demonstrates:
+---
 
--   **AST-aware code intelligence**
--   **Graph-based deterministic reasoning**
--   **Hybrid semantic + lexical retrieval**
--   **Reciprocal Rank Fusion**
--   **Cross-encoder reranking**
--   **Retrieval quality filtering**
--   **Intent-aware query routing**
--   **Production API development with FastAPI**
--   **Container/cloud deployment concepts**
--   **Managed PostgreSQL**
--   **Vector database integration**
--   **AWS S3 and CloudFront deployment**
--   **Secure private S3 origin using CloudFront Origin Access Control**
+## 👤 Author
 
+**Akshay Gupta**
+[GitHub](https://github.com/AkshayGupta3106)
 
-if you intend to release the project under the MIT License.
+⭐ If you find this project useful, consider giving it a star.
