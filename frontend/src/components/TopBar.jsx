@@ -64,6 +64,11 @@ export default function TopBar({ theme, onThemeToggle, onCommandOpen, healthStat
           </div>
         )}
 
+        {/* Author Credit */}
+        <span className="hidden sm:inline-flex text-[10px] font-mono uppercase tracking-widest text-slate-400 mr-2 border-r border-[var(--border-strong)] pr-3" style={{ opacity: 0.6 }}>
+          by Akshay Gupta
+        </span>
+
         {/* Theme toggle */}
         <button
           onClick={onThemeToggle}
