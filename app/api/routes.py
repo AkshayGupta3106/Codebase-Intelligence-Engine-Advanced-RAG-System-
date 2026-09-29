@@ -562,9 +562,9 @@ async def query_rag_stream(payload: QueryRequest):
 				from google import genai as _genai
 				_gclient = _genai.Client(api_key=gemini_key)
 				env_model = os.getenv("GEMINI_CHAT_MODEL", "").strip()
-				candidate_models = [env_model] if env_model else ["gemini-1.5-flash", "gemini-2.5-flash", "gemini-1.5-pro"]
-				if "gemini-1.5-flash" not in candidate_models:
-					candidate_models.append("gemini-1.5-flash")
+				candidate_models = [env_model] if env_model else ["gemini-2.5-flash", "gemini-3.5-flash", "gemini-2.5-pro"]
+				if "gemini-2.5-flash" not in candidate_models:
+					candidate_models.append("gemini-2.5-flash")
 
 				user_prompt = (
 					"You are an expert code intelligence assistant.\n"

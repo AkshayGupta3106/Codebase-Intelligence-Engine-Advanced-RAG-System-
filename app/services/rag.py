@@ -34,7 +34,7 @@ os.environ['REQUESTS_CA_BUNDLE'] = certifi.where()
 
 logger = logging.getLogger(__name__)
 GROQ_BASE_URL = "https://api.groq.com/openai/v1/chat/completions"
-GROQ_MODEL = "llama-3.3-70b-versatile"
+GROQ_MODEL = "openai/gpt-oss-120b"
 CONTEXT_MAX_TOKENS = 1200
 QUERY_TYPO_FIXES = {
     "funtion": "function",
@@ -215,9 +215,9 @@ def _generate_with_gemini(query: str, context: str) -> str:
     )
 
     env_model = os.getenv("GEMINI_CHAT_MODEL", "").strip()
-    candidate_models = [env_model] if env_model else ["gemini-1.5-flash", "gemini-2.5-flash", "gemini-1.5-pro"]
-    if "gemini-1.5-flash" not in candidate_models:
-        candidate_models.append("gemini-1.5-flash")
+    candidate_models = [env_model] if env_model else ["gemini-2.5-flash", "gemini-3.5-flash", "gemini-2.5-pro"]
+    if "gemini-2.5-flash" not in candidate_models:
+        candidate_models.append("gemini-2.5-flash")
 
     last_exc = None
     for model_name in candidate_models:

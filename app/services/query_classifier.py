@@ -12,7 +12,7 @@ from app.services.tls_http import format_tls_error, urlopen_with_tls
 
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
-GROQ_MODEL = "llama-3.3-70b-versatile"
+GROQ_MODEL = "openai/gpt-oss-120b"
 VALID_LABELS = {"explain", "find_usage", "impact_analysis", "search"}
 logger = logging.getLogger(__name__)
 
