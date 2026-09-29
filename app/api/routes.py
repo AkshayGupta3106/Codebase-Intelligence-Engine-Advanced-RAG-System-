@@ -276,6 +276,36 @@ async def ingest_document(
 	}
 
 
+def _clear_repo_data() -> None:
+	try:
+		from app.services.vector_store import get_qdrant_client, COLLECTION_NAME, ensure_collection
+		client = get_qdrant_client()
+		if client.collection_exists(collection_name=COLLECTION_NAME):
+			client.delete_collection(collection_name=COLLECTION_NAME)
+		from app.services.embeddings import embedding_dimension
+		try:
+			emb_dim = embedding_dimension()
+		except Exception:
+			emb_dim = 768
+		ensure_collection(vector_size=emb_dim, collection_name=COLLECTION_NAME)
+	except Exception as exc:
+		logger.warning("Failed to clear Qdrant collection: %s", exc)
+
+	try:
+		from app.services.call_graph_store import _postgres_dsn
+		dsn = _postgres_dsn()
+		if dsn:
+			import psycopg2
+			with psycopg2.connect(dsn) as conn:
+				with conn.cursor() as cur:
+					cur.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'call_graph');")
+					if cur.fetchone()[0]:
+						cur.execute("TRUNCATE TABLE call_graph RESTART IDENTITY CASCADE;")
+				conn.commit()
+	except Exception as exc:
+		logger.warning("Failed to clear call_graph table: %s", exc)
+
+
 @router.post("/index_repo")
 def index_repository(payload: dict[str, str]) -> dict[str, str]:
 	global _last_indexed_repo_url, _repo_partially_indexed
@@ -287,6 +317,7 @@ def index_repository(payload: dict[str, str]) -> dict[str, str]:
 
 	try:
 		log_memory("routes:index_repo:before_repo_indexing")
+		_clear_repo_data()
 		with tempfile.TemporaryDirectory(prefix="repo_index_") as tmp_dir:
 			repo_dir = Path(tmp_dir) / "repo"
 			clone_result = subprocess.run(

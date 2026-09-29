@@ -7,7 +7,7 @@ from typing import Optional
 import psutil
 
 from app.services.embeddings import generate_embeddings
-from app.services.vector_store import search_similar_chunks, get_qdrant_client
+from app.services.vector_store import search_similar_chunks, get_qdrant_client, COLLECTION_NAME
 from qdrant_client.http.models import Filter
 
 RRF_K = 60
@@ -100,7 +100,7 @@ def _get_all_chunks() -> list[dict[str, object]]:
             if len(all_results) >= MAX_TOTAL_CHUNKS:
                 break
             points, offset = client.scroll(
-                collection_name="documents",
+                collection_name=COLLECTION_NAME,
                 scroll_filter=Filter(),
                 limit=256,
                 with_payload=True,
